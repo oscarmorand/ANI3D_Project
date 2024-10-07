@@ -2,7 +2,13 @@
 
 #include "cgp/cgp.hpp"
 
+#include <unordered_set>
+#include <memory>
 
+struct fluid_class
+{
+    std::unordered_set<std::shared_ptr<fluid_class>> soluble_classes;
+};
 
 // SPH Particle
 struct particle_element
@@ -15,6 +21,8 @@ struct particle_element
     float rho;      // density at this particle position
     float pressure; // pressure at this particle position
     float nu;       // viscosity
+
+    std::shared_ptr<fluid_class> fluid_type;
 
     cgp::vec3 color; // color of the particle
 

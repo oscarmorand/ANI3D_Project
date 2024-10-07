@@ -1,6 +1,5 @@
 #include "scene.hpp"
 
-
 using namespace cgp;
 
 void update_field_color(grid_2D<vec3>& field, numarray<particle_element> const& particles);
@@ -14,7 +13,7 @@ void scene_structure::initialize()
 	camera_control.look_at({ 0.0f, 0.0f, 2.0f }, {0,0,0}, {0,1,0});
 	global_frame.initialize_data_on_gpu(mesh_primitive_frame());
 
-	field.resize(20, 20);
+	field.resize(50, 50);
 	field_quad.initialize_data_on_gpu(mesh_primitive_quadrangle({ -1,-1,0 }, { 1,-1,0 }, { 1,1,0 }, { -1,1,0 }) );
 	field_quad.material.phong = { 1,0,0 };
 	field_quad.texture.initialize_texture_2d_on_gpu(field);
@@ -32,6 +31,16 @@ void scene_structure::initialize_sph()
 	float const c = 1.0f;
 	float const h = sph_parameters.h;
 
+	auto water = std::make_shared<fluid_class>();
+	auto milk = std::make_shared<fluid_class>();
+	auto oil = std::make_shared<fluid_class>();
+
+	water->soluble_classes.insert(milk);
+	milk->soluble_classes.insert(water);
+	
+	fluid_classes.emplace(water);
+	fluid_classes.emplace(milk);
+	fluid_classes.emplace(oil);
 
 	// Fill a square with particles
 	particles.clear();
@@ -45,17 +54,26 @@ void scene_structure::initialize_sph()
 				particle.p = { x + h / 8.0 * rand_uniform() ,y + h / 8.0 * rand_uniform(), z + h / 8.0 * rand_uniform()};
 
 				float m = rand_uniform();
-				if (m < 0.5f) {
+				if (m < 0.3f) {
 					// Oil
 					particle.m = 0.1f;
-					particle.nu = 0.005f;
-					particle.color = { 1,1,0.3 };
+					particle.nu = 0.05f;
+					particle.color = { 1.0, 1.0, 0.3 };
+					particle.fluid_type = oil;
 				}
-				else {
+				else if (m < 0.6f) {
 					// Water
 					particle.m = 1.0f;
-					particle.nu = 0.00005f;
-					particle.color = { 0.1,0.4,1 };
+					particle.nu = 0.0005f;
+					particle.color = { 0.1, 0.3, 1.0 };
+					particle.fluid_type = water;
+				}
+				else {
+					// Milk
+					particle.m = 1.0f;
+					particle.nu = 0.0005f;
+					particle.color = { 1.0, 1.0, 1.0 };
+					particle.fluid_type = milk;
 				}
 
 				particles.push_back(particle);
@@ -138,6 +156,7 @@ void update_field_color(grid_2D<vec3>& field, numarray<particle_element> const& 
 	float const d = 0.1f;
 	int const Nf = int(field.dimension.x);
 
+	#pragma omp parallel for
 	for (int kx = 0; kx < Nf; ++kx) {
 		for (int ky = 0; ky < Nf; ++ky) {
 

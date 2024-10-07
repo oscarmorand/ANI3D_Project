@@ -98,3 +98,8 @@ if(UNIX)
    target_link_libraries(${executable_name} dl) #dlopen is required by Glad on Unix
 endif()
 
+
+find_package(OpenMP REQUIRED)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(${executable_name} OpenMP::OpenMP_CXX)
+endif()

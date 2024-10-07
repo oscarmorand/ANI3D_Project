@@ -32,28 +32,72 @@ float W_density(vec3 const& p_i, const vec3& p_j, float h)
 	return 315.0/(64.0*3.14159f*std::pow(h,9)) * std::pow(h*h-r*r, 3.0f);
 }
 
+void update_parameters(numarray<particle_element>& particles, float h)
+{
+    int const N = particles.size();
+
+    #pragma omp parallel for
+    for(int i=0; i<N; ++i)
+    {
+        float m = 0.0;
+        float nu = 0.0;
+        vec3 color{0.0,0.0,0.0};
+        float div = 0.0;
+
+        auto fluid_i = particles[i].fluid_type;
+        const auto& p_i = particles[i].p;
+
+        for(int j=0; j<N; ++j)
+        {
+            auto const& p_j = particles[j].p;
+            float const r = norm(p_i - p_j);
+            if (r<h)
+            {
+                auto fluid_j = particles[j].fluid_type;
+
+                if (fluid_i == fluid_j || fluid_i->soluble_classes.find(fluid_j) != fluid_i->soluble_classes.end()) {
+                    m += particles[j].m;
+                    nu += particles[j].nu;
+                    color += particles[j].color;
+                    div += 1.0;
+                }
+            }
+        }
+
+        if (div > 0.0)
+        {
+            particles[i].m = m / div;
+            particles[i].nu = nu / div;
+            particles[i].color = color / div;
+        }
+    }
+}
 
 void update_density(numarray<particle_element>& particles, float h)
 {
-    // To do: Compute the density value (particles[i].rho) at each particle position
-    //  rho_i = \sum_j m W_density(pi,pj)
+    // Compute the density value (particles[i].rho) at each particle position
+
     int const N = particles.size();
+
+    #pragma omp parallel for
     for(int i=0; i<N; ++i)
     {
         float rho = 0;
+        auto const& p_i = particles[i].p;
+
         for(int j=0; j<N; ++j)
         {
-            auto const& p_i = particles[i].p;
             auto const& p_j = particles[j].p;
             float const m_j = particles[j].m;
 
-            float const r = norm(p_i-p_j);
+            float const r = norm(p_i - p_j);
             if (r<h)
             {
                 float const w = W_density(p_i, p_j, h);
                 rho += m_j * w;
             }
         }
+
         particles[i].rho = rho;
     }
 }
@@ -62,6 +106,8 @@ void update_density(numarray<particle_element>& particles, float h)
 void update_pressure(numarray<particle_element>& particles, float rho0, float stiffness)
 {
 	const int N = particles.size();
+
+    #pragma omp parallel for
     for(int i=0; i<N; ++i)
         particles[i].pressure = density_to_pressure(particles[i].rho, rho0, stiffness);
 }
@@ -71,13 +117,13 @@ void update_force(numarray<particle_element>& particles, float h)
 {
 	// gravity
     const int N = particles.size();
-    for(int i=0; i<N; ++i) {
-        float m_i = particles[i].m;
-        particles[i].f = m_i * vec3{0,-9.81f,0};
-    }
 
+    #pragma omp parallel for
     for(int i=0; i<N; ++i)
     {
+        float const m_i = particles[i].m;
+        particles[i].f = m_i * vec3{0,-9.81f,0};
+
         vec3 F_pressure{0,0,0};
         vec3 F_viscosity{0,0,0};
 
@@ -85,7 +131,6 @@ void update_force(numarray<particle_element>& particles, float h)
         float const pr_i = particles[i].pressure;
         float const rho_i = particles[i].rho;
         vec3 const v_i = particles[i].v;
-        float const m_i = particles[i].m;
         float const nu_i = particles[i].nu;
 
         for(int j=0; j<N; ++j)
@@ -122,6 +167,7 @@ void simulate(float dt, numarray<particle_element>& particles, sph_parameters_st
 {
 
 	// Update values
+    update_parameters(particles, sph_parameters.h);
     update_density(particles, sph_parameters.h);                   // First compute updated density
     update_pressure(particles, sph_parameters.rho0, sph_parameters.stiffness);       // Compute associated pressure
     update_force(particles, sph_parameters.h);  // Update forces
@@ -129,6 +175,11 @@ void simulate(float dt, numarray<particle_element>& particles, sph_parameters_st
 	// Numerical integration
 	float const damping = 0.005f;
     int const N = particles.size();
+
+    // Collision
+    float const epsilon = 1e-3f;
+
+    #pragma omp parallel for
 	for(int k=0; k<N; ++k)
 	{
 		vec3& p = particles[k].p;
@@ -138,15 +189,6 @@ void simulate(float dt, numarray<particle_element>& particles, sph_parameters_st
 
 		v = (1-damping)*v + dt*f/m;
 		p = p + dt*v;
-	}
-
-
-	// Collision
-    float const epsilon = 1e-3f;
-    for(int k=0; k<N; ++k)
-    {
-        vec3& p = particles[k].p;
-        vec3& v = particles[k].v;
 
         // small perturbation to avoid alignment
         if( p.y<-1 ) {p.y = -1+epsilon*rand_uniform();  v.y *= -0.5f;}
@@ -154,6 +196,5 @@ void simulate(float dt, numarray<particle_element>& particles, sph_parameters_st
         if( p.x>1 )  {p.x =  1-epsilon*rand_uniform();  v.x *= -0.5f;}
         if( p.z<-1 ) {p.z = -1+epsilon*rand_uniform();  v.z *= -0.5f;}
         if( p.z>1 )  {p.z =  1-epsilon*rand_uniform();  v.z *= -0.5f;}
-    }
-
+	}
 }

@@ -37,6 +37,7 @@ struct scene_structure : cgp::scene_inputs_generic {
 
 	sph_parameters_structure sph_parameters; // Physical parameter related to SPH
 	cgp::numarray<particle_element> particles;      // Storage of the particles
+	std::unordered_set<std::shared_ptr<fluid_class>> fluid_classes;       // Storage of the different fluids present in the scene
 	cgp::mesh_drawable sphere_particle; // Sphere used to display a particle
 	cgp::curve_drawable curve_visual;   // Circle used to display the radius h of influence
 
