@@ -2,7 +2,7 @@
 
 using namespace cgp;
 
-void update_field_color(grid_2D<vec3>& field, numarray<particle_element> const& particles);
+void update_field_color(grid_2D<vec3>& field, cgp::numarray<std::shared_ptr<particle_element>>& particles);
 
 
 void scene_structure::initialize()
@@ -13,7 +13,7 @@ void scene_structure::initialize()
 	camera_control.look_at({ 0.0f, 0.0f, 2.0f }, {0,0,0}, {0,1,0});
 	global_frame.initialize_data_on_gpu(mesh_primitive_frame());
 
-	field.resize(50, 50);
+	field.resize(100, 100);
 	field_quad.initialize_data_on_gpu(mesh_primitive_quadrangle({ -1,-1,0 }, { 1,-1,0 }, { 1,1,0 }, { -1,1,0 }) );
 	field_quad.material.phong = { 1,0,0 };
 	field_quad.texture.initialize_texture_2d_on_gpu(field);
@@ -28,7 +28,7 @@ void scene_structure::initialize()
 void scene_structure::initialize_sph()
 {
 	// Initial particle spacing (relative to h)
-	float const c = 1.0f;
+	float const c = 0.3f;
 	float const h = sph_parameters.h;
 
 	auto water = std::make_shared<fluid_class>();
@@ -42,45 +42,78 @@ void scene_structure::initialize_sph()
 	fluid_classes.emplace(milk);
 	fluid_classes.emplace(oil);
 
+	particles_grid = grid_container({ 2,2,2 }, { -1,-1,-1 }, h);
+
 	// Fill a square with particles
 	particles.clear();
 	for (float x = h; x < 1.0f - h; x = x + c * h)
 	{
 		for (float y = -1.0f + h; y < 1.0f - h; y = y + c * h)
 		{
+			/*
 			for (float z = -1.0f + h; z < 1.0f - h; z = z + c * h)
 			{
-				particle_element particle;
-				particle.p = { x + h / 8.0 * rand_uniform() ,y + h / 8.0 * rand_uniform(), z + h / 8.0 * rand_uniform()};
+				auto particle = std::make_shared<particle_element>();
+				particle->p = { x + h / 8.0 * rand_uniform() ,y + h / 8.0 * rand_uniform(), z + h / 8.0 * rand_uniform()};
 
 				float m = rand_uniform();
 				if (m < 0.3f) {
 					// Oil
-					particle.m = 0.1f;
-					particle.nu = 0.05f;
-					particle.color = { 1.0, 1.0, 0.3 };
-					particle.fluid_type = oil;
+					particle->m = 0.1f;
+					particle->nu = 0.05f;
+					particle->color = { 1.0, 1.0, 0.3 };
+					particle->fluid_type = oil;
 				}
 				else if (m < 0.6f) {
 					// Water
-					particle.m = 1.0f;
-					particle.nu = 0.0005f;
-					particle.color = { 0.1, 0.3, 1.0 };
-					particle.fluid_type = water;
+					particle->m = 1.0f;
+					particle->nu = 0.0005f;
+					particle->color = { 0.1, 0.3, 1.0 };
+					particle->fluid_type = water;
 				}
 				else {
 					// Milk
-					particle.m = 1.0f;
-					particle.nu = 0.0005f;
-					particle.color = { 1.0, 1.0, 1.0 };
-					particle.fluid_type = milk;
+					particle->m = 1.0f;
+					particle->nu = 0.0005f;
+					particle->color = { 1.0, 1.0, 1.0 };
+					particle->fluid_type = milk;
 				}
 
 				particles.push_back(particle);
+				particles_grid.add_particle(particle);
 			}
+			*/
+
+			auto particle = std::make_shared<particle_element>();
+			particle->p = { x + h / 8.0 * rand_uniform() ,y + h / 8.0 * rand_uniform(), h / 8.0 * rand_uniform()};
+
+			float m = rand_uniform();
+			if (m < 0.3f) {
+					// Oil
+					particle->m = 0.1f;
+					particle->nu = 0.05f;
+					particle->color = { 1.0, 1.0, 0.3 };
+					particle->fluid_type = oil;
+			}
+			else if (m < 0.6f) {
+					// Water
+					particle->m = 1.0f;
+					particle->nu = 0.0005f;
+					particle->color = { 0.1, 0.3, 1.0 };
+					particle->fluid_type = water;
+			}
+			else {
+					// Milk
+					particle->m = 1.0f;
+					particle->nu = 0.0005f;
+					particle->color = { 1.0, 1.0, 1.0 };
+					particle->fluid_type = milk;
+			}
+
+			particles.push_back(particle);
+			particles_grid.add_particle(particle);
 		}
 	}
-
 }
 
 void scene_structure::display_frame()
@@ -90,14 +123,13 @@ void scene_structure::display_frame()
 	
 	timer.update(); // update the timer to the current elapsed time
 	float const dt = 0.005f * timer.scale;
-	simulate(dt, particles, sph_parameters);
-
+	simulate(dt, particles, particles_grid, sph_parameters);
 
 	if (gui.display_particles) {
 		for (int k = 0; k < particles.size(); ++k) {
-			vec3 const& p = particles[k].p;
+			vec3 const& p = particles[k]->p;
 			sphere_particle.model.translation = p;
-			sphere_particle.material.color = particles[k].color;
+			sphere_particle.material.color = particles[k]->color;
 			draw(sphere_particle, environment);
 		}
 	}
@@ -105,7 +137,7 @@ void scene_structure::display_frame()
 	if (gui.display_radius) {
 		curve_visual.model.scaling = sph_parameters.h;
 		for (int k = 0; k < particles.size(); k += 10) {
-			curve_visual.model.translation = particles[k].p;
+			curve_visual.model.translation = particles[k]->p;
 			draw(curve_visual, environment);
 		}
 	}
@@ -131,7 +163,7 @@ void scene_structure::display_gui()
 	ImGui::Checkbox("Radius", &gui.display_radius);
 }
 
-void update_field_color(grid_2D<vec3>& field, numarray<particle_element> const& particles)
+void update_field_color(grid_2D<vec3>& field, cgp::numarray<std::shared_ptr<particle_element>>& particles)
 {
 	/*
 	field.fill({ 1,1,1 });
@@ -166,8 +198,8 @@ void update_field_color(grid_2D<vec3>& field, numarray<particle_element> const& 
 			float min_dist = d;
 
 			for (size_t k = 0; k < particles.size(); ++k) {
-				vec3 const& color = particles[k].color;
-				vec3 const& pi = particles[k].p;
+				vec3 const& color = particles[k]->color;
+				vec3 const& pi = particles[k]->p;
 				float const r = norm(pi - p0);
 
 				if (r < min_dist) {

@@ -2,32 +2,9 @@
 
 #include "cgp/cgp.hpp"
 
-#include <unordered_set>
-#include <memory>
-
-struct fluid_class
-{
-    std::unordered_set<std::shared_ptr<fluid_class>> soluble_classes;
-};
-
-// SPH Particle
-struct particle_element
-{
-    cgp::vec3 p; // Position
-    cgp::vec3 v; // Speed
-    cgp::vec3 f; // Force
-
-    float m;        // mass of the particle
-    float rho;      // density at this particle position
-    float pressure; // pressure at this particle position
-    float nu;       // viscosity
-
-    std::shared_ptr<fluid_class> fluid_type;
-
-    cgp::vec3 color; // color of the particle
-
-    particle_element() : p{0,0,0},v{0,0,0},f{0,0,0},m(0),rho(0),pressure(0) {}
-};
+#include "particle_element.hpp"
+#include "fluid_class.hpp"
+#include "grid_container.hpp"
 
 // SPH simulation parameters
 struct sph_parameters_structure
@@ -43,5 +20,4 @@ struct sph_parameters_structure
     
 };
 
-
-void simulate(float dt, cgp::numarray<particle_element>& particles, sph_parameters_structure const& sph_parameters);
+void simulate(float dt, cgp::numarray<std::shared_ptr<particle_element>>& particles, grid_container& particles_grid, sph_parameters_structure const& sph_parameters);
