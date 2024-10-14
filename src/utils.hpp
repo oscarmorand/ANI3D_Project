@@ -12,6 +12,7 @@ enum dimension_enum {
 
 enum right_click_action_enum {
 	SPAWN_PARTICLES,
+	REMOVE_PARTICLES,
 	ADD_FORCE
 };
 

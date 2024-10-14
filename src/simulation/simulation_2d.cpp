@@ -48,6 +48,7 @@ static void update_parameters(numarray<particle_element>& particles, sph_paramet
         const auto& p_i = particles[i].p;
         auto v_i = norm(particles[i].v);
 
+        #pragma omp parallel for
         for(int j=0; j<N; ++j)
         {
             if (i == j) continue;
@@ -95,6 +96,7 @@ static void update_density(numarray<particle_element>& particles, float h)
         float rho = 0;
         auto const& p_i = particles[i].p;
 
+        #pragma omp parallel for
         for(int j=0; j<N; ++j)
         {
             auto const& p_j = particles[j].p;
@@ -143,6 +145,7 @@ static void update_force(numarray<particle_element>& particles, sph_parameters_s
         vec3 const& v_i = particles[i].v;
         float nu_i = particles[i].nu;
 
+        #pragma omp parallel for
         for(int j=0; j<N; ++j)
         {
             if (i != j) {

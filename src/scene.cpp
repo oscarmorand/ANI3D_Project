@@ -213,22 +213,17 @@ void scene_structure::display_gui()
 	if (clear_particles)
 		particles.clear();
 
-	ImGui::Spacing();
-	ImGui::Spacing();
-	ImGui::Spacing();
+	ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
 	ImGui::Text("Simulation parameters");
 	ImGui::SliderFloat("Timer scale", &timer.scale, 0.01f, 4.0f, "%0.2f");
 	ImGui::SliderFloat("Gravity", &sph_parameters.gravity_strength, 0.0f, 30.0f, "%0.1f");
-	ImGui::Text("Gravity Preset");
-	ImGui::SameLine();
-	bool gravity_preset = ImGui::Button("Earth");
-	ImGui::SameLine();
+	ImGui::Text("Gravity Preset"); ImGui::SameLine();
+	bool gravity_preset = ImGui::Button("Earth"); ImGui::SameLine();
 	if (gravity_preset)
 	{
 		sph_parameters.gravity_strength = 9.81f;
 	}
-	gravity_preset = ImGui::Button("Moon");
-	ImGui::SameLine();
+	gravity_preset = ImGui::Button("Moon"); ImGui::SameLine();
 	if (gravity_preset)
 	{
 		sph_parameters.gravity_strength = 1.62f;
@@ -241,20 +236,16 @@ void scene_structure::display_gui()
 	ImGui::SliderFloat("Neighbour radius", &sph_parameters.h, 0.1f, 0.3f, "%0.3f");
 	ImGui::SliderFloat("Fluid mixing rate", &sph_parameters.fluid_mixing_rate, 0.0f, 1.0f, "%0.2f");
 
-	ImGui::Spacing();
-	ImGui::Spacing();
-	ImGui::Spacing();
+	ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
 	ImGui::Text("Right-click action");
-	ImGui::RadioButton("Spawn particles", &gui.right_click_action, SPAWN_PARTICLES);
-	ImGui::SameLine();
+	ImGui::RadioButton("Spawn particles", &gui.right_click_action, SPAWN_PARTICLES); ImGui::SameLine();
+	ImGui::RadioButton("Remove particles", &gui.right_click_action, REMOVE_PARTICLES); ImGui::SameLine();
 	ImGui::RadioButton("Add force", &gui.right_click_action, ADD_FORCE);
 
 	if (gui.right_click_action == SPAWN_PARTICLES)
 	{
-		ImGui::RadioButton("Water", &gui.spawn_particle_type, WATER);
-		ImGui::SameLine();
-		ImGui::RadioButton("Milk", &gui.spawn_particle_type, MILK);
-		ImGui::SameLine();
+		ImGui::RadioButton("Water", &gui.spawn_particle_type, WATER); ImGui::SameLine();
+		ImGui::RadioButton("Milk", &gui.spawn_particle_type, MILK); ImGui::SameLine();
 		ImGui::RadioButton("Oil", &gui.spawn_particle_type, OIL);
 
 		ImGui::SliderInt("Number of particles", &gui.spawn_particle_number, 1, 1000);
@@ -263,7 +254,14 @@ void scene_structure::display_gui()
 		else
 			ImGui::SliderFloat("Radius of spawn sphere", &gui.spawn_particle_radius, 0.01f, 0.5f, "%0.2f");
 	}
-	else
+	else if (gui.right_click_action == REMOVE_PARTICLES)
+	{
+		if (dimension == DIM_2D)
+			ImGui::SliderFloat("Radius of deletion disk", &gui.spawn_particle_radius, 0.01f, 0.5f, "%0.2f");
+		else
+			ImGui::SliderFloat("Radius of deletion sphere", &gui.spawn_particle_radius, 0.01f, 0.5f, "%0.2f");
+	}
+	else if (gui.right_click_action == ADD_FORCE)
 	{
 		// TODO
 	}
@@ -368,6 +366,7 @@ void scene_structure::update_field_mean(int Nf)
 	#pragma omp parallel for
 	for (int kx = 0; kx < Nf; ++kx)
 	{
+		#pragma omp parallel for
 		for (int ky = 0; ky < Nf; ++ky)
 		{
 			vec3 full_color = {0, 0, 0};
@@ -408,6 +407,18 @@ void scene_structure::update_field_color()
 	}
 }
 
+void scene_structure::delete_particles_in_disk(vec3 const &center, float radius)
+{
+	std::vector<particle_element> new_particles;
+	for (size_t k = 0; k < particles.size(); ++k)
+	{
+		vec3 const &p = particles[k].p;
+		if (norm(p - center) > radius)
+			new_particles.push_back(particles[k]);
+	}
+	particles = new_particles;
+}
+
 void scene_structure::mouse_move_event()
 {
 	camera_control.action_mouse_move(environment.camera_view, dimension, cam_projection);
@@ -422,18 +433,27 @@ void scene_structure::mouse_click_event()
 
 	if (inputs.mouse.click.right)
 	{ // Special action
+		vec2 const cursor = inputs.mouse.position.current;
+		vec3 const p = {cursor.x, cursor.y, 0};
+
 		if (gui.right_click_action == SPAWN_PARTICLES)
 		{
-			if (dimension == DIM_2D)
-			{
-				vec2 const cursor = inputs.mouse.position.current;
-				vec3 const p = {cursor.x, cursor.y, 0};
+			if (dimension == DIM_2D){
 				spawn_particles_in_disk(p, gui.spawn_particle_radius, gui.spawn_particle_number, gui.spawn_particle_type);
 			}
-			else
-			{
+			else {
 				// TODO
 			}
+		}
+		else if (gui.right_click_action == REMOVE_PARTICLES)
+		{
+			if (dimension == DIM_2D) {
+				delete_particles_in_disk(p, gui.spawn_particle_radius);
+			}
+		}
+		else if (gui.right_click_action == ADD_FORCE)
+		{
+			// TODO
 		}
 	}
 }

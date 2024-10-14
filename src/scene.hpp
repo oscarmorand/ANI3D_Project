@@ -83,6 +83,8 @@ struct scene_structure : cgp::scene_inputs_generic {
 	void spawn_particles_in_sphere(vec3 const& center, float radius, int N, int fluid_type);
 	void initialize_sph();
 
+	void delete_particles_in_disk(vec3 const &center, float radius);
+
 	void mouse_move_event();
 	void mouse_click_event();
 	void keyboard_event();
