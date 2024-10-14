@@ -25,6 +25,7 @@ struct gui_parameters {
 	bool display_radius = false;
 
 	int color_type = FLUID_COLOR;
+	float color_smoothing_radius = 0.12f;
 
 	float threshold_min = 0.0f;
 	float threshold_max = 1.0f;
@@ -71,6 +72,9 @@ struct scene_structure : cgp::scene_inputs_generic {
 	void initialize();    // Standard initialization to be called before the animation loop
 	void display_frame(); // The frame display to be called within the animation loop
 	void display_gui();   // The display of the GUI, also called within the animation loop
+
+	void update_field_closest(int Nf);
+	void update_field_mean(int Nf);
 	void update_field_color();
 	vec3 get_particle_color(particle_element const& particle);
 
