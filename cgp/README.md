@@ -38,7 +38,7 @@ The directory _library/_ contains the source code of CGP, while the directory _e
 Each example is an independent program with its own CMakeLists.txt and/or Makefile. 
 
 CGP requires
-* A C++14 (or greater) compatible compiler (GCC/CLang, or a recent Visual Studio).
+* A C++17 (or greater) compatible compiler (GCC/CLang, or a recent Visual Studio).
 * An OpenGL 3.3 (or greater) compatible system.
 * [libGLFW](https://www.glfw.org/) and [pkgconfig](https://www.freedesktop.org/wiki/Software/pkg-config/) installed on Linux system.
 
@@ -74,7 +74,7 @@ make -j$(nproc)
 **Method 1**. Create a Visual Studio project using CMake
 * You may use the following batch script: examples/example_compilation/scripts/__windows_cmake_visual.bat__
 
-_Once opened by Visual Studio, the project should be configured to compile and be executed directly without further setup. Make sure your Windows version is updated for Visual Studio to be able to compile correctly C++14._
+_Once opened by Visual Studio, the project should be configured to compile and be executed directly without further setup. Make sure your Windows version is updated for Visual Studio to be able to compile correctly C++17._
 
 **Method 2**. Install MinGW from [MSYS2](https://www.msys2.org/). 
 * You may use the following batch script: examples/example_compilation/scripts/__windows_compile_mingw.bat__

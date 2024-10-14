@@ -41,7 +41,7 @@ struct sph_parameters_structure
     // Stiffness converting density to pressure
     float stiffness = 8.0f;
     
-    float gravity_strength = 1.0f;
+    float gravity_strength = 9.81f;
 
     float fluid_mixing_rate = 1.0f;
 };

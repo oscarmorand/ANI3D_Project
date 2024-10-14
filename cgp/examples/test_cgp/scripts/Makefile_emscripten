@@ -18,7 +18,7 @@ DEPS := $(OBJS:.o=.d)
 INC_DIRS  := . $(PATH_TO_CGP)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-CPPFLAGS += $(INC_FLAGS) -MMD -MP -DIMGUI_IMPL_OPENGL_LOADER_GLAD -O2 -std=c++14 -Wall -Wextra -Wfatal-errors -Wno-sign-compare -Wno-type-limits -Wno-pragmas -DSOLUTION -DCGP_NO_DEBUG 
+CPPFLAGS += $(INC_FLAGS) -MMD -MP -DIMGUI_IMPL_OPENGL_LOADER_GLAD -O2 -std=c++17 -Wall -Wextra -Wfatal-errors -Wno-sign-compare -Wno-type-limits -Wno-pragmas -DSOLUTION -DCGP_NO_DEBUG 
 
 LDLIBS += -ldl -lm -sMAX_WEBGL_VERSION=2 -s USE_GLFW=3 -s ALLOW_MEMORY_GROWTH=1 --preload-file shaders/ --preload-file assets/
 

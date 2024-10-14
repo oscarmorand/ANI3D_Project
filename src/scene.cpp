@@ -2,8 +2,6 @@
 
 using namespace cgp;
 
-void update_field_color(grid_2D<vec3>& field, numarray<particle_element> const& particles);
-
 
 void scene_structure::initialize()
 {
@@ -52,22 +50,27 @@ void scene_structure::spawn_particle(vec3 const& pos, fluid_type_enum fluid_type
 			particle.color = { 1.0, 1.0, 0.3 };
 			break;
 	}
+	particle.fluid_type = fluid_classes[fluid_type];
 
 	particles.push_back(particle);
 }
 
-void scene_structure::spawn_particles_in_sphere(vec3 center, float radius, int N)
-{
-	// TODO
-}
-
 void scene_structure::spawn_particles_in_disk(vec3 const& center, float radius, int N, fluid_type_enum fluid_type)
 {
-	for (int k = 0; k < N; ++k) {
-		vec2 const u = { rand_uniform(), rand_uniform() };
-		vec3 const p = { center.x + radius * (2 * u.x - 1), center.y + radius * (2 * u.y - 1), 0 };
-		spawn_particle(p, fluid_type);
-	}
+    for (int k = 0; k < N; ++k) {
+        vec2 const u = { rand_uniform(), rand_uniform() };
+        vec3 const p = { center.x + radius * (2 * u.x - 1), center.y + radius * (2 * u.y - 1), 0};
+        spawn_particle(p, fluid_type);
+    }
+}
+
+void scene_structure::spawn_particles_in_sphere(vec3 const& center, float radius, int N, fluid_type_enum fluid_type)
+{
+    for (int k = 0; k < N; ++k) {
+        vec3 const u = { rand_uniform(), rand_uniform(), rand_uniform() };
+        vec3 const p = { center.x + radius * (2 * u.x - 1), center.y + radius * (2 * u.y - 1), center.z + radius * (2 * u.z - 1) };
+        spawn_particle(p, fluid_type);
+    }
 }
 
 void scene_structure::initialize_sph()
@@ -95,19 +98,21 @@ void scene_structure::initialize_sph()
 		{
 			for (float z = -1.0f + h; z < 1.0f - h; z = z + c * h)
 			{
-				vec3 pos = { x + h / 8.0 * rand_uniform() ,y + h / 8.0 * rand_uniform(), z + h / 8.0 * rand_uniform()};
+				vec3 pos = {0, 0, 0};
+				if (dimension == DIM_2D)
+					pos = { x + h / 8.0 * rand_uniform(), y + h / 8.0 * rand_uniform(), 0 };
+				else
+					pos = { x + h / 8.0 * rand_uniform(), y + h / 8.0 * rand_uniform(), z + h / 8.0 * rand_uniform() };
 
 				fluid_type_enum fluid_type = WATER;
 				float m = rand_uniform();
 				if (m < 0.3f) {
-					// Water
+					fluid_type = WATER;
 				}
 				else if (m < 0.6f) {
-					// Oil
 					fluid_type = OIL;
 				}
 				else {
-					// Milk
 					fluid_type = MILK;
 				}
 
@@ -126,12 +131,10 @@ void scene_structure::display_frame()
 		timer.update(); // update the timer to the current elapsed time
 		float const dt = 0.005f * timer.scale;
 
-		if (dimension == DIM_2D) {
+		if (dimension == DIM_2D)
 			simulate_2d(dt, particles, sph_parameters);
-		}
-		else {
+		else
 			simulate_3d(dt, particles, sph_parameters);
-		}
 	}
 
 	if (gui.display_particles) {
@@ -194,7 +197,20 @@ void scene_structure::display_gui()
 	ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
 	ImGui::Text("Simulation parameters");
 	ImGui::SliderFloat("Timer scale", &timer.scale, 0.01f, 4.0f, "%0.2f");
-	ImGui::SliderFloat("Gravity", &sph_parameters.gravity_strength, 0.0f, 10.0f, "%0.2f");
+	ImGui::SliderFloat("Gravity", &sph_parameters.gravity_strength, 0.0f, 30.0f, "%0.1f");
+	ImGui::Text("Gravity Preset"); ImGui::SameLine();
+	bool gravity_preset = ImGui::Button("Earth"); ImGui::SameLine();
+	if (gravity_preset) {
+		sph_parameters.gravity_strength = 9.81f;
+	}
+	gravity_preset = ImGui::Button("Moon"); ImGui::SameLine();
+	if (gravity_preset) {
+		sph_parameters.gravity_strength = 1.62f;
+	}
+	gravity_preset = ImGui::Button("Jupiter");
+	if (gravity_preset) {
+		sph_parameters.gravity_strength = 24.79f;
+	}
 	ImGui::SliderFloat("Neighbour radius", &sph_parameters.h, 0.1f, 0.3f, "%0.3f");
 	ImGui::SliderFloat("Fluid mixing rate", &sph_parameters.fluid_mixing_rate, 0.0f, 1.0f, "%0.2f");
 
@@ -204,7 +220,9 @@ void scene_structure::display_gui()
 	ImGui::RadioButton("Add force", &gui.right_click_action, ADD_FORCE);
 
 	if (gui.right_click_action == SPAWN_PARTICLES) {
-		// TODO change the type of fluid spawned
+		ImGui::RadioButton("Water", &gui.spawn_particle_type, WATER); ImGui::SameLine();
+		ImGui::RadioButton("Milk", &gui.spawn_particle_type, MILK); ImGui::SameLine();
+		ImGui::RadioButton("Oil", &gui.spawn_particle_type, OIL);
 
 		ImGui::SliderInt("Number of particles", &gui.spawn_particle_number, 1, 1000);
 		if (dimension == DIM_2D)

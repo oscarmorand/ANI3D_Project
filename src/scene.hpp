@@ -5,8 +5,9 @@
 #include "cgp/cgp.hpp"
 #include "environment.hpp"
 
-#include "simulation/simulation_2d.hpp"
+#include "simulation/simulation.hpp"
 #include "simulation/simulation_3d.hpp"
+#include "simulation/simulation_2d.hpp"
 
 using cgp::mesh_drawable;
 
@@ -93,8 +94,8 @@ struct scene_structure : cgp::scene_inputs_generic {
 	vec3 get_particle_color(particle_element const& particle);
 
 	void spawn_particle(vec3 const& pos, fluid_type_enum fluid_type);
-	void spawn_particles_in_sphere(vec3 center, float radius, int N);
 	void spawn_particles_in_disk(vec3 const& center, float radius, int N, fluid_type_enum fluid_type);
+	void spawn_particles_in_sphere(vec3 const& center, float radius, int N, fluid_type_enum fluid_type);
 	void initialize_sph();
 
 	void mouse_move_event();
