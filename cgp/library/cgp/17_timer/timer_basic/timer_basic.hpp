@@ -10,6 +10,7 @@ namespace cgp
 		float update();
 		void start();
 		void stop();
+		bool is_running() const;
 
 		float t;
 		float scale;

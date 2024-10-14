@@ -1,4 +1,4 @@
-#include "simulation.hpp"
+#include "simulation_3d.hpp"
 
 using namespace cgp;
 
@@ -32,7 +32,7 @@ float W_density(vec3 const& p_i, const vec3& p_j, float h)
 	return 315.0/(64.0*3.14159f*std::pow(h,9)) * std::pow(h*h-r*r, 3.0f);
 }
 
-void update_parameters(numarray<particle_element>& particles, float h)
+void update_parameters(numarray<particle_element>& particles, sph_parameters_structure const& sph_parameters)
 {
     int const N = particles.size();
 
@@ -46,12 +46,15 @@ void update_parameters(numarray<particle_element>& particles, float h)
 
         auto fluid_i = particles[i].fluid_type;
         const auto& p_i = particles[i].p;
+        auto v_i = norm(particles[i].v);
 
         for(int j=0; j<N; ++j)
         {
+            if (i == j) continue;
+
             auto const& p_j = particles[j].p;
             float const r = norm(p_i - p_j);
-            if (r<h)
+            if (r < sph_parameters.h)
             {
                 auto fluid_j = particles[j].fluid_type;
 
@@ -66,9 +69,16 @@ void update_parameters(numarray<particle_element>& particles, float h)
 
         if (div > 0.0)
         {
-            particles[i].m = m / div;
-            particles[i].nu = nu / div;
-            particles[i].color = color / div;
+            float fixed_rate = 0.1f;
+
+            float diff_m = (m / div) - particles[i].m;
+            particles[i].m += sph_parameters.fluid_mixing_rate * diff_m * fixed_rate * v_i;
+
+            float diff_nu = (nu / div) - particles[i].nu;
+            particles[i].nu += sph_parameters.fluid_mixing_rate * diff_nu * fixed_rate * v_i;
+
+            vec3 diff_color = (color / div) - particles[i].color;
+            particles[i].color += sph_parameters.fluid_mixing_rate * diff_color * fixed_rate * v_i;
         }
     }
 }
@@ -113,16 +123,17 @@ void update_pressure(numarray<particle_element>& particles, float rho0, float st
 }
 
 // Compute the forces and update the acceleration of the particles
-void update_force(numarray<particle_element>& particles, float h)
+void update_force(numarray<particle_element>& particles, sph_parameters_structure const& sph_parameters)
 {
-	// gravity
     const int N = particles.size();
+    float const h = sph_parameters.h;
 
     #pragma omp parallel for
     for(int i=0; i<N; ++i)
     {
         float const m_i = particles[i].m;
-        particles[i].f = m_i * vec3{0,-9.81f,0};
+        particles[i].f = m_i * vec3{0,-9.81f,0} * sph_parameters.gravity_strength;
+    
 
         vec3 F_pressure{0,0,0};
         vec3 F_viscosity{0,0,0};
@@ -163,14 +174,14 @@ void update_force(numarray<particle_element>& particles, float h)
     }
 }
 
-void simulate(float dt, numarray<particle_element>& particles, sph_parameters_structure const& sph_parameters)
+void simulate_3d(float dt, numarray<particle_element>& particles, sph_parameters_structure const& sph_parameters)
 {
-
 	// Update values
-    update_parameters(particles, sph_parameters.h);
+    if (sph_parameters.fluid_mixing_rate > 0.0f)
+        update_parameters(particles, sph_parameters);
     update_density(particles, sph_parameters.h);                   // First compute updated density
     update_pressure(particles, sph_parameters.rho0, sph_parameters.stiffness);       // Compute associated pressure
-    update_force(particles, sph_parameters.h);  // Update forces
+    update_force(particles, sph_parameters);  // Update forces
 
 	// Numerical integration
 	float const damping = 0.005f;

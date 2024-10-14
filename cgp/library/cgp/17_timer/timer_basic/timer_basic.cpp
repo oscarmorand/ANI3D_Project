@@ -31,5 +31,9 @@ void timer_basic::stop()
     running = false;
 }
 
+bool timer_basic::is_running() const
+{
+    return running;
+}
 
 }

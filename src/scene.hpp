@@ -1,28 +1,65 @@
 #pragma once
 
+#include <map>
 
 #include "cgp/cgp.hpp"
 #include "environment.hpp"
 
-#include "simulation/simulation.hpp"
+#include "simulation/simulation_2d.hpp"
+#include "simulation/simulation_3d.hpp"
 
 using cgp::mesh_drawable;
 
+enum color_type_enum {
+	FLUID_COLOR,
+	VELOCITY
+};
+
+enum dimension_enum {
+	DIM_2D,
+	DIM_3D
+};
+
+enum right_click_action_enum {
+	SPAWN_PARTICLES,
+	ADD_FORCE
+};
+
+enum fluid_type_enum {
+	WATER,
+	MILK,
+	OIL
+};
 
 struct gui_parameters {
+	int right_click_action = SPAWN_PARTICLES;
+
+	int spawn_particle_number = 10;
+	float spawn_particle_radius = 0.1f;
+	int spawn_particle_type = WATER;
+
 	bool display_color = true;
 	bool display_particles = true;
 	bool display_radius = false;
+
+	int color_type = FLUID_COLOR;
+
+	float threshold_min = 0.0f;
+	float threshold_max = 1.0f;
+	vec3 color_min = { 0,0,1 };
+	vec3 color_max = { 1,0,0 };
 };
 
 // The structure of the custom scene
 struct scene_structure : cgp::scene_inputs_generic {
+
+	int dimension = DIM_2D;
 	
 	// ****************************** //
 	// Elements and shapes of the scene
 	// ****************************** //
 	camera_controller_orbit camera_control;
-	camera_projection_perspective camera_projection;
+	camera_projection cam_projection;
 	window_structure window;
 
 	mesh_drawable global_frame;          // The standard global frame
@@ -37,7 +74,7 @@ struct scene_structure : cgp::scene_inputs_generic {
 
 	sph_parameters_structure sph_parameters; // Physical parameter related to SPH
 	cgp::numarray<particle_element> particles;      // Storage of the particles
-	std::unordered_set<std::shared_ptr<fluid_class>> fluid_classes;       // Storage of the different fluids present in the scene
+	std::map<fluid_type_enum, std::shared_ptr<fluid_class>> fluid_classes;       // Storage of the different fluids present in the scene
 	cgp::mesh_drawable sphere_particle; // Sphere used to display a particle
 	cgp::curve_drawable curve_visual;   // Circle used to display the radius h of influence
 
@@ -52,7 +89,12 @@ struct scene_structure : cgp::scene_inputs_generic {
 	void initialize();    // Standard initialization to be called before the animation loop
 	void display_frame(); // The frame display to be called within the animation loop
 	void display_gui();   // The display of the GUI, also called within the animation loop
+	void update_field_color();
+	vec3 get_particle_color(particle_element const& particle);
 
+	void spawn_particle(vec3 const& pos, fluid_type_enum fluid_type);
+	void spawn_particles_in_sphere(vec3 center, float radius, int N);
+	void spawn_particles_in_disk(vec3 const& center, float radius, int N, fluid_type_enum fluid_type);
 	void initialize_sph();
 
 	void mouse_move_event();

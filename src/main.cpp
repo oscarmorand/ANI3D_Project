@@ -101,8 +101,8 @@ void animation_loop()
 
 	emscripten_update_window_size(scene.window.width, scene.window.height); // update window size in case of use of emscripten (not used by default)
 
-	scene.camera_projection.aspect_ratio = scene.window.aspect_ratio();
-	scene.environment.camera_projection = scene.camera_projection.matrix();
+	scene.cam_projection.aspect_ratio = scene.window.aspect_ratio();
+	scene.environment.camera_projection = scene.cam_projection.matrix();
 	glViewport(0, 0, scene.window.width, scene.window.height);
 
 	vec3 const& background_color = scene.environment.background_color;

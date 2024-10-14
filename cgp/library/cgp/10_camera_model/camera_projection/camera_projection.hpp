@@ -4,8 +4,15 @@
 
 namespace cgp
 {
+	/*
+	struct camera_projection
+	{
+		mat4 matrix() const;
+		mat4 matrix_inverse() const;
+	};
+
 	// perspective model
-	struct camera_projection_perspective
+	struct camera_projection_perspective : camera_projection
 	{
 		float field_of_view = 50.0f * Pi/180;
 		float aspect_ratio = 1.0f;
@@ -16,7 +23,7 @@ namespace cgp
 		mat4 matrix_inverse() const;
 	};
 
-	struct camera_projection_orthographic
+	struct camera_projection_orthographic : camera_projection
 	{
 		float left = -1.0f;
 		float right = 1.0f;
@@ -30,9 +37,8 @@ namespace cgp
 		mat4 matrix_inverse() const;
 	};
 }
+	*/
 
-	
-/*
 	struct perspective_parameters {
 		float field_of_view =  50.0f * 3.14f/180;
 		float aspect_ratio  =   1.0f;
@@ -45,15 +51,16 @@ namespace cgp
 		float right  =  1;
 		float bottom = -1;
 		float top    =  1;
-		float back   = -1;
-		float front  =  1;
+		float z_near   = -1;
+		float z_far  =  1;
 	};
 
 	enum struct camera_perspective_type {perspective, orthographic};
+
 	struct camera_projection
 	{
 		static camera_projection build_perspective(float field_of_view, float aspect_ratio, float depth_min, float depth_max);
-		static camera_projection build_orthographic(float left, float right, float bottom, float top, float back, float front, float aspect_ratio=1.0f);
+		static camera_projection build_orthographic(float left, float right, float bottom, float top, float back, float front);
 
 		camera_perspective_type type = camera_perspective_type::perspective;
 		perspective_parameters perspective_data;
@@ -68,4 +75,3 @@ namespace cgp
 	};
 
 }
-*/

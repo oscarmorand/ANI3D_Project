@@ -4,7 +4,7 @@
 
 namespace cgp
 {
-	picking_structure picking_spheres(vec2 const& screen_click, numarray<vec3> const& spheres_centers, float spheres_radius, camera_generic_base const& camera, camera_projection_perspective const& projection)
+	picking_structure picking_spheres(vec2 const& screen_click, numarray<vec3> const& spheres_centers, float spheres_radius, camera_generic_base const& camera, camera_projection const& projection)
 	{
 		picking_structure picking;
 
@@ -23,7 +23,7 @@ namespace cgp
 		return picking;
 	}
 
-	picking_structure picking_mesh_vertex_as_sphere(vec2 const& screen_click, numarray<vec3> const& vertex_position, numarray<vec3> const& vertex_normal, float picking_distance, camera_generic_base const& camera, camera_projection_perspective const& projection)
+	picking_structure picking_mesh_vertex_as_sphere(vec2 const& screen_click, numarray<vec3> const& vertex_position, numarray<vec3> const& vertex_normal, float picking_distance, camera_generic_base const& camera, camera_projection const& projection)
 	{
 		picking_structure picking;
 
