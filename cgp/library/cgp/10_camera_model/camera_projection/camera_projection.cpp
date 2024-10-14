@@ -34,6 +34,21 @@ namespace cgp {
 		this->aspect_ratio = aspect_ratio;
 	}
 
+	void camera_projection::zoom(float factor)
+	{
+		if (type == camera_perspective_type::perspective)
+		{
+			perspective_data.field_of_view *= factor;
+		}
+		else
+		{
+			orthographic_data.left *= factor;
+			orthographic_data.right *= factor;
+			orthographic_data.bottom *= factor;
+			orthographic_data.top *= factor;
+		}
+	}
+
 	mat4 camera_projection::matrix() const
 	{
 		if (type == camera_perspective_type::perspective)

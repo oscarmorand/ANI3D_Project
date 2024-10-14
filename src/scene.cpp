@@ -10,8 +10,8 @@ void scene_structure::initialize()
 	else
 		cam_projection = cgp::camera_projection::build_perspective(50.0f * 3.14f / 180, 1.0f, 0.1f, 100.0f);
 	cam_projection.update_aspect_ratio(window.aspect_ratio());
+
 	camera_control.initialize(inputs, window); // Give access to the inputs and window global state to the camera controler
-	camera_control.look_at({ 0.0f, 0.0f, 2.0f }, {0,0,0}, {0,1,0});
 	global_frame.initialize_data_on_gpu(mesh_primitive_frame());
 
 	field.resize(50, 50);
@@ -26,7 +26,7 @@ void scene_structure::initialize()
 	curve_visual.initialize_data_on_gpu(curve_primitive_circle());
 }
 
-void scene_structure::spawn_particle(vec3 const& pos, fluid_type_enum fluid_type)
+void scene_structure::spawn_particle(vec3 const& pos, int fluid_type)
 {
 	particle_element particle;
 	particle.p = pos;
@@ -55,7 +55,7 @@ void scene_structure::spawn_particle(vec3 const& pos, fluid_type_enum fluid_type
 	particles.push_back(particle);
 }
 
-void scene_structure::spawn_particles_in_disk(vec3 const& center, float radius, int N, fluid_type_enum fluid_type)
+void scene_structure::spawn_particles_in_disk(vec3 const& center, float radius, int N, int fluid_type)
 {
     for (int k = 0; k < N; ++k) {
         vec2 const u = { rand_uniform(), rand_uniform() };
@@ -64,7 +64,7 @@ void scene_structure::spawn_particles_in_disk(vec3 const& center, float radius, 
     }
 }
 
-void scene_structure::spawn_particles_in_sphere(vec3 const& center, float radius, int N, fluid_type_enum fluid_type)
+void scene_structure::spawn_particles_in_sphere(vec3 const& center, float radius, int N, int fluid_type)
 {
     for (int k = 0; k < N; ++k) {
         vec3 const u = { rand_uniform(), rand_uniform(), rand_uniform() };
@@ -125,7 +125,7 @@ void scene_structure::initialize_sph()
 void scene_structure::display_frame()
 {
 	// Set the light to the current position of the camera
-	environment.light = camera_control.camera_model.position();
+	// environment.light = camera_control.camera_model.position();
 	
 	if (timer.is_running()) {
 		timer.update(); // update the timer to the current elapsed time
@@ -167,6 +167,8 @@ void scene_structure::display_gui()
 	change_dimension |= ImGui::RadioButton("3D", &dimension, DIM_3D);
 	if (change_dimension) {
 		initialize_sph();
+		camera_control = camera_controller();
+		camera_control.initialize(inputs, window);
 		if (dimension == DIM_2D) {
 			gui.display_color = true;
 			cam_projection = cgp::camera_projection::build_orthographic(-1.1f, 1.1f, -1.1f, 1.1f, -10, 10);
@@ -322,22 +324,21 @@ void scene_structure::update_field_color()
 
 void scene_structure::mouse_move_event()
 {
-	// Do not mode the camera
-	if (!inputs.keyboard.shift)
-		camera_control.action_mouse_move(environment.camera_view);
+	camera_control.action_mouse_move(environment.camera_view, dimension, cam_projection);
 }
 
 void scene_structure::mouse_click_event()
 {
 	if (inputs.mouse.click.left) { // Movements
-		camera_control.action_mouse_click(environment.camera_view);
+		camera_control.action_mouse_move(environment.camera_view, dimension, cam_projection);
 	}
+
 	if (inputs.mouse.click.right) { // Special action
 		if (gui.right_click_action == SPAWN_PARTICLES) {
 			if (dimension == DIM_2D) {
 				vec2 const cursor = inputs.mouse.position.current;
 				vec3 const p = { cursor.x, cursor.y, 0 };
-				spawn_particles_in_disk(p, gui.spawn_particle_radius, gui.spawn_particle_number, fluid_type_enum(gui.spawn_particle_type));
+				spawn_particles_in_disk(p, gui.spawn_particle_radius, gui.spawn_particle_number, gui.spawn_particle_type);
 			}
 			else {
 				// TODO

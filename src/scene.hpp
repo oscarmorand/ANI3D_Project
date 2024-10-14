@@ -4,33 +4,14 @@
 
 #include "cgp/cgp.hpp"
 #include "environment.hpp"
+#include "utils.hpp"
+#include "camera_controller.hpp"
 
 #include "simulation/simulation.hpp"
 #include "simulation/simulation_3d.hpp"
 #include "simulation/simulation_2d.hpp"
 
 using cgp::mesh_drawable;
-
-enum color_type_enum {
-	FLUID_COLOR,
-	VELOCITY
-};
-
-enum dimension_enum {
-	DIM_2D,
-	DIM_3D
-};
-
-enum right_click_action_enum {
-	SPAWN_PARTICLES,
-	ADD_FORCE
-};
-
-enum fluid_type_enum {
-	WATER,
-	MILK,
-	OIL
-};
 
 struct gui_parameters {
 	int right_click_action = SPAWN_PARTICLES;
@@ -59,7 +40,7 @@ struct scene_structure : cgp::scene_inputs_generic {
 	// ****************************** //
 	// Elements and shapes of the scene
 	// ****************************** //
-	camera_controller_orbit camera_control;
+	camera_controller camera_control;
 	camera_projection cam_projection;
 	window_structure window;
 
@@ -75,7 +56,7 @@ struct scene_structure : cgp::scene_inputs_generic {
 
 	sph_parameters_structure sph_parameters; // Physical parameter related to SPH
 	cgp::numarray<particle_element> particles;      // Storage of the particles
-	std::map<fluid_type_enum, std::shared_ptr<fluid_class>> fluid_classes;       // Storage of the different fluids present in the scene
+	std::map<int, std::shared_ptr<fluid_class>> fluid_classes;       // Storage of the different fluids present in the scene
 	cgp::mesh_drawable sphere_particle; // Sphere used to display a particle
 	cgp::curve_drawable curve_visual;   // Circle used to display the radius h of influence
 
@@ -93,9 +74,9 @@ struct scene_structure : cgp::scene_inputs_generic {
 	void update_field_color();
 	vec3 get_particle_color(particle_element const& particle);
 
-	void spawn_particle(vec3 const& pos, fluid_type_enum fluid_type);
-	void spawn_particles_in_disk(vec3 const& center, float radius, int N, fluid_type_enum fluid_type);
-	void spawn_particles_in_sphere(vec3 const& center, float radius, int N, fluid_type_enum fluid_type);
+	void spawn_particle(vec3 const& pos, int fluid_type);
+	void spawn_particles_in_disk(vec3 const& center, float radius, int N, int fluid_type);
+	void spawn_particles_in_sphere(vec3 const& center, float radius, int N, int fluid_type);
 	void initialize_sph();
 
 	void mouse_move_event();
@@ -104,8 +85,3 @@ struct scene_structure : cgp::scene_inputs_generic {
 	void idle_frame();
 
 };
-
-
-
-
-

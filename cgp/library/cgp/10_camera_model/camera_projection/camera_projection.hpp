@@ -67,6 +67,7 @@ namespace cgp
 		orthographic_parameters orthographic_data;
 		float aspect_ratio = 1.0f;
 
+		void zoom(float factor);
 
 		mat4 matrix() const;
 		mat4 matrix_inverse() const;
