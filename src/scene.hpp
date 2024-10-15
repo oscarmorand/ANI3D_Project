@@ -84,6 +84,7 @@ struct scene_structure : cgp::scene_inputs_generic {
 	void initialize_sph();
 
 	void delete_particles_in_disk(vec3 const &center, float radius);
+	void add_radial_force(vec3 const &center, float radius);
 
 	void mouse_move_event();
 	void mouse_click_event();

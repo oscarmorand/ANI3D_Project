@@ -174,8 +174,7 @@ void scene_structure::display_frame()
 
 void scene_structure::display_gui()
 {
-	bool change_dimension = ImGui::RadioButton("2D", &dimension, DIM_2D);
-	ImGui::SameLine();
+	bool change_dimension = ImGui::RadioButton("2D", &dimension, DIM_2D); ImGui::SameLine();
 	change_dimension |= ImGui::RadioButton("3D", &dimension, DIM_3D);
 	if (change_dimension)
 	{
@@ -263,12 +262,13 @@ void scene_structure::display_gui()
 	}
 	else if (gui.right_click_action == ADD_FORCE)
 	{
-		// TODO
+		if (dimension == DIM_2D)
+			ImGui::SliderFloat("Radius of force disk", &gui.spawn_particle_radius, 0.01f, 0.5f, "%0.2f");
+		else
+			ImGui::SliderFloat("Radius of force sphere", &gui.spawn_particle_radius, 0.01f, 0.5f, "%0.2f");
 	}
 
-	ImGui::Spacing();
-	ImGui::Spacing();
-	ImGui::Spacing();
+	ImGui::Spacing();ImGui::Spacing();ImGui::Spacing();
 	ImGui::Text("Display options");
 	if (dimension == DIM_2D)
 		ImGui::Checkbox("Color", &gui.display_color);
@@ -278,8 +278,7 @@ void scene_structure::display_gui()
 	if (gui.display_color)
 	{
 		ImGui::Text("2D field color");
-		ImGui::RadioButton("Fluid color", &gui.color_type, FLUID_COLOR);
-		ImGui::SameLine();
+		ImGui::RadioButton("Fluid color", &gui.color_type, FLUID_COLOR);ImGui::SameLine();
 		ImGui::RadioButton("Velocity", &gui.color_type, VELOCITY);
 
 		if (gui.color_type == VELOCITY)
@@ -289,8 +288,7 @@ void scene_structure::display_gui()
 			ImGui::SliderFloat("Velocity min", &gui.threshold_min, 0.0f, 10.0f);
 			ImGui::SliderFloat("Velocity max", &gui.threshold_max, 0.0f, 10.0f);
 
-			ImGui::ColorPicker3("Color min", &gui.color_min[0]);
-			ImGui::SameLine();
+			ImGui::ColorPicker3("Color min", &gui.color_min[0]);ImGui::SameLine();
 			ImGui::ColorPicker3("Color max", &gui.color_max[0]);
 		}
 	}
@@ -410,6 +408,7 @@ void scene_structure::update_field_color()
 void scene_structure::delete_particles_in_disk(vec3 const &center, float radius)
 {
 	std::vector<particle_element> new_particles;
+
 	for (size_t k = 0; k < particles.size(); ++k)
 	{
 		vec3 const &p = particles[k].p;
@@ -419,9 +418,24 @@ void scene_structure::delete_particles_in_disk(vec3 const &center, float radius)
 	particles = new_particles;
 }
 
+void scene_structure::add_radial_force(vec3 const &center, float radius)
+{
+	#pragma omp parallel
+	for (size_t k = 0; k < particles.size(); ++k)
+	{
+		vec3 const &p = particles[k].p;
+		if (norm(p - center) < radius) {
+			vec3 force = 100.0f * (p - center);
+			particles[k].f += force;
+		}
+	}
+}
+
 void scene_structure::mouse_move_event()
 {
-	camera_control.action_mouse_move(environment.camera_view, dimension, cam_projection);
+	if (inputs.mouse.click.left) {
+		camera_control.action_mouse_move(environment.camera_view, dimension, cam_projection);
+	}
 }
 
 void scene_structure::mouse_click_event()
@@ -453,7 +467,9 @@ void scene_structure::mouse_click_event()
 		}
 		else if (gui.right_click_action == ADD_FORCE)
 		{
-			// TODO
+			if (dimension == DIM_2D) {
+				add_radial_force(p, gui.spawn_particle_radius);
+			}
 		}
 	}
 }
