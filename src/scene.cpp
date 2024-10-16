@@ -18,6 +18,7 @@ void scene_structure::initialize()
 	field_quad.material.phong = {1, 0, 0};
 	field_quad.texture.initialize_texture_2d_on_gpu(field);
 
+	initialize_fluid_classes();
 	initialize_sph();
 	sphere_particle.initialize_data_on_gpu(mesh_primitive_sphere(1.0, {0, 0, 0}, 10, 10));
 	sphere_particle.model.scaling = 0.01f;
@@ -55,6 +56,22 @@ void scene_structure::spawn_particle(vec3 const &pos, int fluid_type)
 	particles.push_back(particle);
 }
 
+void scene_structure::spawn_random_type_particle(vec3 const &center) {
+	float m = rand_uniform();
+	if (m < 0.3f)
+	{
+		spawn_particle(center, WATER);
+	}
+	else if (m < 0.6f)
+	{
+		spawn_particle(center, OIL);
+	}
+	else
+	{
+		spawn_particle(center, MILK);
+	}
+}
+
 void scene_structure::spawn_particles_in_disk(vec3 const &center, float radius, int N, int fluid_type)
 {
 	for (int k = 0; k < N; ++k)
@@ -75,12 +92,8 @@ void scene_structure::spawn_particles_in_sphere(vec3 const &center, float radius
 	}
 }
 
-void scene_structure::initialize_sph()
+void scene_structure::initialize_fluid_classes()
 {
-	// Initial particle spacing (relative to h)
-	float const c = 1.0f;
-	float const h = sph_parameters.h;
-
 	auto water = std::make_shared<fluid_class>();
 	auto milk = std::make_shared<fluid_class>();
 	auto oil = std::make_shared<fluid_class>();
@@ -91,39 +104,47 @@ void scene_structure::initialize_sph()
 	fluid_classes[WATER] = water;
 	fluid_classes[MILK] = milk;
 	fluid_classes[OIL] = oil;
+}
+
+void scene_structure::initialize_sph()
+{
+	// Initial particle spacing (relative to h)
+	float const c = 1.0f;
+	float const h = sph_parameters.h;
 
 	// Fill a square with particles
 	particles.clear();
-	for (float x = h; x < 1.0f - h; x = x + c * h)
+	for (float x = -1.0f + h; x < 1.0f - h; x = x + c * h)
 	{
 		for (float y = -1.0f + h; y < 1.0f - h; y = y + c * h)
 		{
-			for (float z = -1.0f + h; z < 1.0f - h; z = z + c * h)
-			{
-				vec3 pos = {0, 0, 0};
-				if (dimension == DIM_2D)
-					pos = {x + h / 8.0 * rand_uniform(), y + h / 8.0 * rand_uniform(), 0};
-				else
+			vec3 pos = {0, 0, 0};
+			if (dimension == DIM_2D) {
+				pos = {x + h / 8.0 * rand_uniform(), y + h / 8.0 * rand_uniform(), 0};
+				spawn_random_type_particle(pos);
+			}
+			else {
+				for (float z = -1.0f + h; z < 1.0f - h; z = z + c * h)
+				{
 					pos = {x + h / 8.0 * rand_uniform(), y + h / 8.0 * rand_uniform(), z + h / 8.0 * rand_uniform()};
-
-				fluid_type_enum fluid_type = WATER;
-				float m = rand_uniform();
-				if (m < 0.3f)
-				{
-					fluid_type = WATER;
+					spawn_random_type_particle(pos);
 				}
-				else if (m < 0.6f)
-				{
-					fluid_type = OIL;
-				}
-				else
-				{
-					fluid_type = MILK;
-				}
-
-				spawn_particle(pos, fluid_type);
 			}
 		}
+	}
+
+	if (dimension == DIM_2D) {
+		// Initialize the spatial grid
+		float const cell_size = 2.0f * h;
+		
+		int const grid_width = int(ceil(2.0f / cell_size));
+		int const grid_height = int(ceil(2.0f / cell_size));
+
+		vec2 const min = {-1.0f, -1.0f};
+
+		grid = spatial_grid(cell_size, grid_width, grid_height, min);
+
+		std::cout << "Grid initialized" << std::endl;
 	}
 }
 
@@ -137,8 +158,16 @@ void scene_structure::display_frame()
 		timer.update(); // update the timer to the current elapsed time
 		float const dt = 0.005f * timer.scale;
 
-		if (dimension == DIM_2D)
-			simulate_2d(dt, particles, sph_parameters);
+		if (dimension == DIM_2D) {
+			// Update the spatial grid
+			grid.clear_grid();
+			for (size_t k = 0; k < particles.size(); ++k)
+			{
+				grid.insert_particle(&particles[k]);
+			}
+
+			simulate_2d(dt, particles, grid, sph_parameters);
+		}
 		else
 			simulate_3d(dt, particles, sph_parameters);
 	}
@@ -249,23 +278,24 @@ void scene_structure::display_gui()
 
 		ImGui::SliderInt("Number of particles", &gui.spawn_particle_number, 1, 1000);
 		if (dimension == DIM_2D)
-			ImGui::SliderFloat("Radius of spawn disk", &gui.spawn_particle_radius, 0.01f, 0.5f, "%0.2f");
+			ImGui::SliderFloat("Radius of spawn disk", &gui.spawn_particle_radius, 0.01f, 1.0f, "%0.2f");
 		else
-			ImGui::SliderFloat("Radius of spawn sphere", &gui.spawn_particle_radius, 0.01f, 0.5f, "%0.2f");
+			ImGui::SliderFloat("Radius of spawn sphere", &gui.spawn_particle_radius, 0.01f, 1.0f, "%0.2f");
 	}
 	else if (gui.right_click_action == REMOVE_PARTICLES)
 	{
 		if (dimension == DIM_2D)
-			ImGui::SliderFloat("Radius of deletion disk", &gui.spawn_particle_radius, 0.01f, 0.5f, "%0.2f");
+			ImGui::SliderFloat("Radius of deletion disk", &gui.spawn_particle_radius, 0.01f, 1.0f, "%0.2f");
 		else
-			ImGui::SliderFloat("Radius of deletion sphere", &gui.spawn_particle_radius, 0.01f, 0.5f, "%0.2f");
+			ImGui::SliderFloat("Radius of deletion sphere", &gui.spawn_particle_radius, 0.01f, 1.0f, "%0.2f");
 	}
 	else if (gui.right_click_action == ADD_FORCE)
 	{
 		if (dimension == DIM_2D)
-			ImGui::SliderFloat("Radius of force disk", &gui.spawn_particle_radius, 0.01f, 0.5f, "%0.2f");
+			ImGui::SliderFloat("Radius of force disk", &gui.spawn_particle_radius, 0.01f, 1.0f, "%0.2f");
 		else
-			ImGui::SliderFloat("Radius of force sphere", &gui.spawn_particle_radius, 0.01f, 0.5f, "%0.2f");
+			ImGui::SliderFloat("Radius of force sphere", &gui.spawn_particle_radius, 0.01f, 1.0f, "%0.2f");
+		ImGui::SliderFloat("Force strength", &gui.force_strength, 0.01f, 3.0f, "%0.2f");
 	}
 
 	ImGui::Spacing();ImGui::Spacing();ImGui::Spacing();
@@ -425,8 +455,8 @@ void scene_structure::add_radial_force(vec3 const &center, float radius)
 	{
 		vec3 const &p = particles[k].p;
 		if (norm(p - center) < radius) {
-			vec3 force = 100.0f * (p - center);
-			particles[k].f += force;
+			vec3 force = 100.0f * gui.force_strength * (p - center);
+			particles[k].external_forces += force;
 		}
 	}
 }

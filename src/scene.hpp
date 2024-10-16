@@ -6,6 +6,7 @@
 #include "environment.hpp"
 #include "utils.hpp"
 #include "camera_controller.hpp"
+#include "spatial_grid.hpp"
 
 #include "simulation/simulation.hpp"
 #include "simulation/simulation_3d.hpp"
@@ -17,8 +18,10 @@ struct gui_parameters {
 	int right_click_action = SPAWN_PARTICLES;
 
 	int spawn_particle_number = 10;
-	float spawn_particle_radius = 0.1f;
+	float spawn_particle_radius = 0.3f;
 	int spawn_particle_type = WATER;
+
+	float force_strength = 1.0f;
 
 	bool display_color = true;
 	bool display_particles = true;
@@ -57,6 +60,7 @@ struct scene_structure : cgp::scene_inputs_generic {
 
 	sph_parameters_structure sph_parameters; // Physical parameter related to SPH
 	cgp::numarray<particle_element> particles;      // Storage of the particles
+	spatial_grid grid; // Spatial grid used to accelerate the computation of the SPH
 	std::map<int, std::shared_ptr<fluid_class>> fluid_classes;       // Storage of the different fluids present in the scene
 	cgp::mesh_drawable sphere_particle; // Sphere used to display a particle
 	cgp::curve_drawable curve_visual;   // Circle used to display the radius h of influence
@@ -79,8 +83,10 @@ struct scene_structure : cgp::scene_inputs_generic {
 	vec3 get_particle_color(particle_element const& particle);
 
 	void spawn_particle(vec3 const& pos, int fluid_type);
+	void spawn_random_type_particle(vec3 const &center);
 	void spawn_particles_in_disk(vec3 const& center, float radius, int N, int fluid_type);
 	void spawn_particles_in_sphere(vec3 const& center, float radius, int N, int fluid_type);
+	void initialize_fluid_classes();
 	void initialize_sph();
 
 	void delete_particles_in_disk(vec3 const &center, float radius);

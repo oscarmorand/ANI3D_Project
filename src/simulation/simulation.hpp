@@ -17,6 +17,8 @@ struct particle_element
     cgp::vec3 v; // Speed
     cgp::vec3 f; // Force
 
+    cgp::vec3 external_forces; 
+
     float m;        // mass of the particle
     float rho;      // density at this particle position
     float pressure; // pressure at this particle position
@@ -25,6 +27,8 @@ struct particle_element
     std::shared_ptr<fluid_class> fluid_type;
 
     cgp::vec3 color; // color of the particle
+
+    int cell_index; // Index of the cell in the spatial grid
 
     particle_element() : p{0,0,0},v{0,0,0},f{0,0,0},m(0),rho(0),pressure(0) {}
 };
