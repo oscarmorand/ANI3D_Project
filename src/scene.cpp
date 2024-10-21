@@ -33,43 +33,28 @@ void scene_structure::spawn_particle(vec3 const &pos, int fluid_type)
 	particle.v = {0, 0, 0};
 	particle.f = {0, 0, 0};
 
-	switch (fluid_type)
-	{
-	case WATER:
-		particle.m = 1.0f;
-		particle.nu = 0.0005f;
-		particle.color = {0.1, 0.3, 1.0};
-		break;
-	case MILK:
-		particle.m = 1.0f;
-		particle.nu = 0.0005f;
-		particle.color = {1.0, 1.0, 1.0};
-		break;
-	case OIL:
-		particle.m = 0.1f;
-		particle.nu = 0.05f;
-		particle.color = {1.0, 1.0, 0.3};
-		break;
-	}
-	particle.fluid_type = fluid_classes[fluid_type];
+	auto const& fluid_class = fluid_classes[fluid_type];
+	particle.m = fluid_class->base_m;
+	particle.nu = fluid_class->base_nu;
+	particle.color = fluid_class->base_color;
+
+	particle.fluid_type = fluid_class;
 
 	particles.push_back(particle);
 }
 
 void scene_structure::spawn_random_type_particle(vec3 const &center) {
 	float m = rand_uniform();
-	if (m < 0.3f)
-	{
-		spawn_particle(center, WATER);
-	}
-	else if (m < 0.6f)
-	{
-		spawn_particle(center, OIL);
-	}
-	else
-	{
-		spawn_particle(center, MILK);
-	}
+	if (m == 1.0f)
+		m = 0.0f;
+
+	int n = fluid_classes.size();
+	if (n == 0)
+		return;
+
+	int k = int(m * n);
+
+	spawn_particle(center, k);
 }
 
 void scene_structure::spawn_particles_in_disk(vec3 const &center, float radius, int N, int fluid_type)
@@ -94,16 +79,16 @@ void scene_structure::spawn_particles_in_sphere(vec3 const &center, float radius
 
 void scene_structure::initialize_fluid_classes()
 {
-	auto water = std::make_shared<fluid_class>();
-	auto milk = std::make_shared<fluid_class>();
-	auto oil = std::make_shared<fluid_class>();
+	auto water = std::make_shared<fluid_class>("Water", 1.0, 0.0005, vec3{0.1, 0.3, 1.0});
+	auto milk = std::make_shared<fluid_class>("Milk", 1.0, 0.0005, vec3{1.0, 1.0, 1.0});
+	auto oil = std::make_shared<fluid_class>("Oil", 0.1, 0.05, vec3{1.0, 1.0, 0.3});
 
 	water->soluble_classes.insert(milk);
 	milk->soluble_classes.insert(water);
 
-	fluid_classes[WATER] = water;
-	fluid_classes[MILK] = milk;
-	fluid_classes[OIL] = oil;
+	fluid_classes.push_back(water);
+	fluid_classes.push_back(milk);
+	fluid_classes.push_back(oil);
 }
 
 void scene_structure::initialize_sph()
@@ -201,129 +186,6 @@ void scene_structure::display_frame()
 	}
 }
 
-void scene_structure::display_gui()
-{
-	bool change_dimension = ImGui::RadioButton("2D", &dimension, DIM_2D); ImGui::SameLine();
-	change_dimension |= ImGui::RadioButton("3D", &dimension, DIM_3D);
-	if (change_dimension)
-	{
-		initialize_sph();
-		camera_control = camera_controller();
-		camera_control.initialize(inputs, window);
-		if (dimension == DIM_2D)
-		{
-			gui.display_color = true;
-			cam_projection = cgp::camera_projection::build_orthographic(-1.1f, 1.1f, -1.1f, 1.1f, -10, 10);
-		}
-		else
-		{
-			gui.display_color = false;
-			cam_projection = cgp::camera_projection::build_perspective(50.0f * 3.14f / 180, 1.0f, 0.1f, 100.0f);
-		}
-	}
-
-	bool const play_pause = ImGui::Button(timer.is_running() ? "Pause" : "Play");
-	if (play_pause)
-	{
-		if (timer.is_running())
-			timer.stop();
-		else
-			timer.start();
-	}
-
-	bool const restart = ImGui::Button("Restart");
-	if (restart)
-	{
-		initialize_sph();
-	}
-
-	bool const clear_particles = ImGui::Button("Clear particles");
-	if (clear_particles)
-		particles.clear();
-
-	ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
-	ImGui::Text("Simulation parameters");
-	ImGui::SliderFloat("Timer scale", &timer.scale, 0.01f, 4.0f, "%0.2f");
-	ImGui::SliderFloat("Gravity", &sph_parameters.gravity_strength, 0.0f, 30.0f, "%0.1f");
-	ImGui::Text("Gravity Preset"); ImGui::SameLine();
-	bool gravity_preset = ImGui::Button("Earth"); ImGui::SameLine();
-	if (gravity_preset)
-	{
-		sph_parameters.gravity_strength = 9.81f;
-	}
-	gravity_preset = ImGui::Button("Moon"); ImGui::SameLine();
-	if (gravity_preset)
-	{
-		sph_parameters.gravity_strength = 1.62f;
-	}
-	gravity_preset = ImGui::Button("Jupiter");
-	if (gravity_preset)
-	{
-		sph_parameters.gravity_strength = 24.79f;
-	}
-	ImGui::SliderFloat("Neighbour radius", &sph_parameters.h, 0.1f, 0.3f, "%0.3f");
-	ImGui::SliderFloat("Fluid mixing rate", &sph_parameters.fluid_mixing_rate, 0.0f, 1.0f, "%0.2f");
-
-	ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
-	ImGui::Text("Right-click action");
-	ImGui::RadioButton("Spawn particles", &gui.right_click_action, SPAWN_PARTICLES); ImGui::SameLine();
-	ImGui::RadioButton("Remove particles", &gui.right_click_action, REMOVE_PARTICLES); ImGui::SameLine();
-	ImGui::RadioButton("Add force", &gui.right_click_action, ADD_FORCE);
-
-	if (gui.right_click_action == SPAWN_PARTICLES)
-	{
-		ImGui::RadioButton("Water", &gui.spawn_particle_type, WATER); ImGui::SameLine();
-		ImGui::RadioButton("Milk", &gui.spawn_particle_type, MILK); ImGui::SameLine();
-		ImGui::RadioButton("Oil", &gui.spawn_particle_type, OIL);
-
-		ImGui::SliderInt("Number of particles", &gui.spawn_particle_number, 1, 1000);
-		if (dimension == DIM_2D)
-			ImGui::SliderFloat("Radius of spawn disk", &gui.spawn_particle_radius, 0.01f, 1.0f, "%0.2f");
-		else
-			ImGui::SliderFloat("Radius of spawn sphere", &gui.spawn_particle_radius, 0.01f, 1.0f, "%0.2f");
-	}
-	else if (gui.right_click_action == REMOVE_PARTICLES)
-	{
-		if (dimension == DIM_2D)
-			ImGui::SliderFloat("Radius of deletion disk", &gui.spawn_particle_radius, 0.01f, 1.0f, "%0.2f");
-		else
-			ImGui::SliderFloat("Radius of deletion sphere", &gui.spawn_particle_radius, 0.01f, 1.0f, "%0.2f");
-	}
-	else if (gui.right_click_action == ADD_FORCE)
-	{
-		if (dimension == DIM_2D)
-			ImGui::SliderFloat("Radius of force disk", &gui.spawn_particle_radius, 0.01f, 1.0f, "%0.2f");
-		else
-			ImGui::SliderFloat("Radius of force sphere", &gui.spawn_particle_radius, 0.01f, 1.0f, "%0.2f");
-		ImGui::SliderFloat("Force strength", &gui.force_strength, 0.01f, 3.0f, "%0.2f");
-	}
-
-	ImGui::Spacing();ImGui::Spacing();ImGui::Spacing();
-	ImGui::Text("Display options");
-	if (dimension == DIM_2D)
-		ImGui::Checkbox("Color", &gui.display_color);
-	ImGui::Checkbox("Particles", &gui.display_particles);
-	ImGui::Checkbox("Radius", &gui.display_radius);
-
-	if (gui.display_color)
-	{
-		ImGui::Text("2D field color");
-		ImGui::RadioButton("Fluid color", &gui.color_type, FLUID_COLOR);ImGui::SameLine();
-		ImGui::RadioButton("Velocity", &gui.color_type, VELOCITY);
-
-		if (gui.color_type == VELOCITY)
-		{
-			ImGui::SliderFloat("Smoothing radius", &gui.color_smoothing_radius, 0.0f, 0.3f);
-
-			ImGui::SliderFloat("Velocity min", &gui.threshold_min, 0.0f, 10.0f);
-			ImGui::SliderFloat("Velocity max", &gui.threshold_max, 0.0f, 10.0f);
-
-			ImGui::ColorPicker3("Color min", &gui.color_min[0]);ImGui::SameLine();
-			ImGui::ColorPicker3("Color max", &gui.color_max[0]);
-		}
-	}
-}
-
 vec3 color_interpolation(vec3 const &c0, vec3 const &c1, float x0, float x1, float x)
 {
 	float const alpha = (x - x0) / (x1 - x0);
@@ -361,20 +223,23 @@ vec3 scene_structure::get_particle_color(particle_element const &particle)
 
 void scene_structure::update_field_closest(int Nf)
 {
+	// Iterate over each grid cell in the field
 	#pragma omp parallel for
 	for (int kx = 0; kx < Nf; ++kx)
 	{
 		for (int ky = 0; ky < Nf; ++ky)
 		{
-			vec3 full_color = {0, 0, 0};
+			vec3 full_color = {0, 0, 0};  // Store the resulting color
 			vec3 const p0 = {2.0f * (kx / (Nf - 1.0f) - 0.5f), 2.0f * (ky / (Nf - 1.0f) - 0.5f), 0.0f};
-
+			int cell_index = grid.compute_cell_index(p0);
 			float min_dist = sph_parameters.h;
 
-			for (size_t k = 0; k < particles.size(); ++k)
+			std::vector<particle_element*> neighbors = grid.get_neighbors(cell_index);
+
+			for (particle_element* particle : neighbors)
 			{
-				vec3 const &color = get_particle_color(particles[k]);
-				vec3 const &pi = particles[k].p;
+				vec3 const& color = get_particle_color(*particle);
+				vec3 const& pi = particle->p;
 				float const r = norm(pi - p0);
 
 				if (r < min_dist)
@@ -394,7 +259,6 @@ void scene_structure::update_field_mean(int Nf)
 	#pragma omp parallel for
 	for (int kx = 0; kx < Nf; ++kx)
 	{
-		#pragma omp parallel for
 		for (int ky = 0; ky < Nf; ++ky)
 		{
 			vec3 full_color = {0, 0, 0};

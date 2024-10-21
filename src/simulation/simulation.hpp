@@ -8,6 +8,16 @@
 struct fluid_class
 {
     std::unordered_set<std::shared_ptr<fluid_class>> soluble_classes;
+
+    std::string fluid_name;
+
+    float base_m;
+    float base_nu;
+    cgp::vec3 base_color;
+
+    fluid_class() : fluid_name(""), base_m(0), base_nu(0), base_color{0,0,0} {};
+
+    fluid_class(std::string name, float m, float nu, cgp::vec3 color) : fluid_name(name), base_m(m), base_nu(nu), base_color(color) {};
 };
 
 // SPH Particle

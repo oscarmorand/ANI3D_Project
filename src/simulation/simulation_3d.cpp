@@ -176,8 +176,8 @@ static void update_force(numarray<particle_element>& particles, sph_parameters_s
 void simulate_3d(float dt, numarray<particle_element>& particles, sph_parameters_structure const& sph_parameters)
 {
 	// Update values
-    if (sph_parameters.fluid_mixing_rate > 0.0f)
-        update_parameters(particles, sph_parameters);
+    //if (sph_parameters.fluid_mixing_rate > 0.0f)
+    //    update_parameters(particles, sph_parameters);
     update_density(particles, sph_parameters.h);                   // First compute updated density
     update_pressure(particles, sph_parameters.rho0, sph_parameters.stiffness);       // Compute associated pressure
     update_force(particles, sph_parameters);  // Update forces

@@ -15,9 +15,3 @@ enum right_click_action_enum {
 	REMOVE_PARTICLES,
 	ADD_FORCE
 };
-
-enum fluid_type_enum {
-	WATER,
-	MILK,
-	OIL
-};

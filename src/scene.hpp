@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <list>
 
 #include "cgp/cgp.hpp"
 #include "environment.hpp"
@@ -19,13 +20,22 @@ struct gui_parameters {
 
 	int spawn_particle_number = 10;
 	float spawn_particle_radius = 0.3f;
-	int spawn_particle_type = WATER;
+	int spawn_particle_type = 0;
+
+	bool new_fluid_creation = false;
+	char new_fluid_name[64] = "New fluid";
+	float new_fluid_mass = 1.0f;
+	float new_fluid_viscosity = 0.01f;
+	vec3 new_fluid_color = { 1.0, 1.0, 1.0 };
+	//std::vector<std::shared_ptr<bool>> new_fluid_soluble;
 
 	float force_strength = 1.0f;
 
 	bool display_color = true;
 	bool display_particles = true;
 	bool display_radius = false;
+
+	int grid_size = 50;
 
 	int color_type = FLUID_COLOR;
 	float color_smoothing_radius = 0.12f;
@@ -61,7 +71,7 @@ struct scene_structure : cgp::scene_inputs_generic {
 	sph_parameters_structure sph_parameters; // Physical parameter related to SPH
 	cgp::numarray<particle_element> particles;      // Storage of the particles
 	spatial_grid grid; // Spatial grid used to accelerate the computation of the SPH
-	std::map<int, std::shared_ptr<fluid_class>> fluid_classes;       // Storage of the different fluids present in the scene
+	cgp::numarray<std::shared_ptr<fluid_class>> fluid_classes;       // Storage of the different fluids present in the scene
 	cgp::mesh_drawable sphere_particle; // Sphere used to display a particle
 	cgp::curve_drawable curve_visual;   // Circle used to display the radius h of influence
 
@@ -76,6 +86,8 @@ struct scene_structure : cgp::scene_inputs_generic {
 	void initialize();    // Standard initialization to be called before the animation loop
 	void display_frame(); // The frame display to be called within the animation loop
 	void display_gui();   // The display of the GUI, also called within the animation loop
+
+	void new_fluid_gui();
 
 	void update_field_closest(int Nf);
 	void update_field_mean(int Nf);
