@@ -6,7 +6,7 @@
 #include "cgp/cgp.hpp"
 #include "environment.hpp"
 #include "utils.hpp"
-#include "camera_controller.hpp"
+#include "camera/camera_controller.hpp"
 #include "spatial_grid.hpp"
 
 #include "simulation/simulation.hpp"
@@ -102,8 +102,11 @@ struct scene_structure : cgp::scene_inputs_generic {
 	void initialize_sph();
 
 	void delete_particles_in_disk(vec3 const &center, float radius);
-	void add_radial_force(vec3 const &center, float radius);
+	void add_radial_force(vec3 const &center, float radius, float strength);
+	void add_vortex_force(vec3 const &center, float radius, float strength);
+	void add_gravity_force(vec3 const &center, float radius, float strength);
 
+	void right_click();
 	void mouse_move_event();
 	void mouse_click_event();
 	void keyboard_event();

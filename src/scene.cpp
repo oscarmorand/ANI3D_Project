@@ -155,6 +155,11 @@ void scene_structure::display_frame()
 		}
 		else
 			simulate_3d(dt, particles, sph_parameters);
+
+		if (inputs.mouse.click.right)
+		{ // Special action
+			right_click();
+		}
 	}
 
 	if (gui.display_particles)
@@ -186,119 +191,6 @@ void scene_structure::display_frame()
 	}
 }
 
-vec3 color_interpolation(vec3 const &c0, vec3 const &c1, float x0, float x1, float x)
-{
-	float const alpha = (x - x0) / (x1 - x0);
-	return (1 - alpha) * c0 + alpha * c1;
-}
-
-vec3 color_clamp(vec3 const &v, float vmin, float vmax)
-{
-	return {clamp(v.x, vmin, vmax), clamp(v.y, vmin, vmax), clamp(v.z, vmin, vmax)};
-}
-
-vec3 scene_structure::get_particle_color(particle_element const &particle)
-{
-	vec3 res = {1, 1, 1};
-
-	switch (gui.color_type)
-	{
-	case FLUID_COLOR:
-	{
-		res = particle.color;
-		break;
-	}
-	case VELOCITY:
-	{
-		vec3 const v = particle.v;
-		res = color_clamp(
-			color_interpolation(
-				gui.color_min, gui.color_max, gui.threshold_min, gui.threshold_max, norm(v)),
-			0.0, 1.0);
-		break;
-	}
-	}
-	return res;
-}
-
-void scene_structure::update_field_closest(int Nf)
-{
-	// Iterate over each grid cell in the field
-	#pragma omp parallel for
-	for (int kx = 0; kx < Nf; ++kx)
-	{
-		for (int ky = 0; ky < Nf; ++ky)
-		{
-			vec3 full_color = {0, 0, 0};  // Store the resulting color
-			vec3 const p0 = {2.0f * (kx / (Nf - 1.0f) - 0.5f), 2.0f * (ky / (Nf - 1.0f) - 0.5f), 0.0f};
-			int cell_index = grid.compute_cell_index(p0);
-			float min_dist = sph_parameters.h;
-
-			std::vector<particle_element*> neighbors = grid.get_neighbors(cell_index);
-
-			for (particle_element* particle : neighbors)
-			{
-				vec3 const& color = get_particle_color(*particle);
-				vec3 const& pi = particle->p;
-				float const r = norm(pi - p0);
-
-				if (r < min_dist)
-				{
-					min_dist = r;
-					full_color = color;
-				}
-			}
-
-			field(kx, Nf - 1 - ky) = full_color;
-		}
-	}
-}
-
-void scene_structure::update_field_mean(int Nf)
-{
-	#pragma omp parallel for
-	for (int kx = 0; kx < Nf; ++kx)
-	{
-		for (int ky = 0; ky < Nf; ++ky)
-		{
-			vec3 full_color = {0, 0, 0};
-			int nb = 0;
-			vec3 const p0 = {2.0f * (kx / (Nf - 1.0f) - 0.5f), 2.0f * (ky / (Nf - 1.0f) - 0.5f), 0.0f};
-
-			for (size_t k = 0; k < particles.size(); ++k)
-			{
-				vec3 const &color = get_particle_color(particles[k]);
-				vec3 const &pi = particles[k].p;
-				float const r = norm(pi - p0);
-
-				if (r < gui.color_smoothing_radius) {
-					full_color += color;
-					nb += 1;
-				}
-			}
-
-			if (nb > 0)
-				full_color /= nb;
-			field(kx, Nf - 1 - ky) = full_color;
-		}
-	}
-}
-
-void scene_structure::update_field_color()
-{
-	field.fill({1, 1, 1});
-	int const Nf = int(field.dimension.x);
-
-	if (gui.color_type == FLUID_COLOR)
-	{
-		update_field_closest(Nf);
-	}
-	else if (gui.color_type == VELOCITY)
-	{
-		update_field_mean(Nf);
-	}
-}
-
 void scene_structure::delete_particles_in_disk(vec3 const &center, float radius)
 {
 	std::vector<particle_element> new_particles;
@@ -312,14 +204,45 @@ void scene_structure::delete_particles_in_disk(vec3 const &center, float radius)
 	particles = new_particles;
 }
 
-void scene_structure::add_radial_force(vec3 const &center, float radius)
+void scene_structure::add_vortex_force(vec3 const &center, float radius, float strength)
 {
 	#pragma omp parallel
 	for (size_t k = 0; k < particles.size(); ++k)
 	{
 		vec3 const &p = particles[k].p;
-		if (norm(p - center) < radius) {
-			vec3 force = 100.0f * gui.force_strength * (p - center);
+		vec3 const diff = center - p;
+		if (norm(diff) < radius) {
+			vec3 const dir = cross(vec3(0,0,-1), normalize(diff));
+			vec3 force = strength * dir;
+			particles[k].external_forces += force;
+		}
+	}
+}
+
+void scene_structure::add_radial_force(vec3 const &center, float radius, float strength)
+{
+	#pragma omp parallel
+	for (size_t k = 0; k < particles.size(); ++k)
+	{
+		vec3 const &p = particles[k].p;
+		vec3 diff = p - center;
+		if (norm(diff) < radius) {
+			diff = normalize(diff);
+			vec3 force = strength * diff;
+			particles[k].external_forces += force;
+		}
+	}
+}
+
+void scene_structure::add_gravity_force(vec3 const &center, float radius, float strength)
+{
+	#pragma omp parallel
+	for (size_t k = 0; k < particles.size(); ++k)
+	{
+		vec3 const &p = particles[k].p;
+		vec3 diff = p - center;
+		if (norm(diff) < radius) {
+			vec3 force = 10.0f * strength * (-diff);
 			particles[k].external_forces += force;
 		}
 	}
@@ -332,6 +255,46 @@ void scene_structure::mouse_move_event()
 	}
 }
 
+void scene_structure::right_click()
+{
+	vec2 const cursor = inputs.mouse.position.current;
+	vec3 const p = {cursor.x, cursor.y, 0};
+
+	if (gui.right_click_action == SPAWN_PARTICLES)
+	{
+		if (dimension == DIM_2D){
+			spawn_particles_in_disk(p, gui.spawn_particle_radius, gui.spawn_particle_number, gui.spawn_particle_type);
+		}
+		else {
+			// TODO
+		}
+	}
+	else if (gui.right_click_action == REMOVE_PARTICLES)
+	{
+		if (dimension == DIM_2D) {
+			delete_particles_in_disk(p, gui.spawn_particle_radius);
+		}
+	}
+	else if (gui.right_click_action == ADD_RADIAL_FORCE)
+	{
+		if (dimension == DIM_2D) {
+			add_radial_force(p, gui.spawn_particle_radius, gui.force_strength);
+		}
+	}
+	else if (gui.right_click_action == ADD_VORTEX_FORCE)
+	{
+		if (dimension == DIM_2D) {
+			add_vortex_force(p, gui.spawn_particle_radius, gui.force_strength);
+		}
+	}
+	else if (gui.right_click_action == ADD_GRAVITY_FORCE)
+	{
+		if (dimension == DIM_2D) {
+			add_gravity_force(p, gui.spawn_particle_radius, gui.force_strength);
+		}
+	}
+}
+
 void scene_structure::mouse_click_event()
 {
 	if (inputs.mouse.click.left)
@@ -341,30 +304,7 @@ void scene_structure::mouse_click_event()
 
 	if (inputs.mouse.click.right)
 	{ // Special action
-		vec2 const cursor = inputs.mouse.position.current;
-		vec3 const p = {cursor.x, cursor.y, 0};
-
-		if (gui.right_click_action == SPAWN_PARTICLES)
-		{
-			if (dimension == DIM_2D){
-				spawn_particles_in_disk(p, gui.spawn_particle_radius, gui.spawn_particle_number, gui.spawn_particle_type);
-			}
-			else {
-				// TODO
-			}
-		}
-		else if (gui.right_click_action == REMOVE_PARTICLES)
-		{
-			if (dimension == DIM_2D) {
-				delete_particles_in_disk(p, gui.spawn_particle_radius);
-			}
-		}
-		else if (gui.right_click_action == ADD_FORCE)
-		{
-			if (dimension == DIM_2D) {
-				add_radial_force(p, gui.spawn_particle_radius);
-			}
-		}
+		right_click();
 	}
 }
 

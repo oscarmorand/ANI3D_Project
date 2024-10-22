@@ -134,7 +134,9 @@ void scene_structure::display_gui()
 	ImGui::Text("Right-click action");
 	ImGui::RadioButton("Spawn particles", &gui.right_click_action, SPAWN_PARTICLES); ImGui::SameLine();
 	ImGui::RadioButton("Remove particles", &gui.right_click_action, REMOVE_PARTICLES); ImGui::SameLine();
-	ImGui::RadioButton("Add force", &gui.right_click_action, ADD_FORCE);
+	ImGui::RadioButton("Add force", &gui.right_click_action, ADD_RADIAL_FORCE);
+	ImGui::RadioButton("Add vortex", &gui.right_click_action, ADD_VORTEX_FORCE); ImGui::SameLine();
+	ImGui::RadioButton("Add gravity point", &gui.right_click_action, ADD_GRAVITY_FORCE);
 
 	if (gui.right_click_action == SPAWN_PARTICLES)
 	{
@@ -161,7 +163,7 @@ void scene_structure::display_gui()
 		else
 			ImGui::SliderFloat("Radius of deletion sphere", &gui.spawn_particle_radius, 0.01f, 1.0f, "%0.2f");
 	}
-	else if (gui.right_click_action == ADD_FORCE)
+	else if (gui.right_click_action == ADD_RADIAL_FORCE || gui.right_click_action == ADD_VORTEX_FORCE || gui.right_click_action == ADD_GRAVITY_FORCE)
 	{
 		if (dimension == DIM_2D)
 			ImGui::SliderFloat("Radius of force disk", &gui.spawn_particle_radius, 0.01f, 1.0f, "%0.2f");
