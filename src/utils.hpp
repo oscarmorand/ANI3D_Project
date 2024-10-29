@@ -2,7 +2,8 @@
 
 enum color_type_enum {
 	FLUID_COLOR,
-	VELOCITY
+	VELOCITY,
+	DENSITY
 };
 
 enum dimension_enum {

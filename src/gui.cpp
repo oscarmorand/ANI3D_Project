@@ -134,9 +134,9 @@ void scene_structure::display_gui()
 	ImGui::Text("Right-click action");
 	ImGui::RadioButton("Spawn particles", &gui.right_click_action, SPAWN_PARTICLES); ImGui::SameLine();
 	ImGui::RadioButton("Remove particles", &gui.right_click_action, REMOVE_PARTICLES); ImGui::SameLine();
-	ImGui::RadioButton("Add force", &gui.right_click_action, ADD_RADIAL_FORCE);
+	ImGui::RadioButton("Add repulsive force", &gui.right_click_action, ADD_RADIAL_FORCE);
 	ImGui::RadioButton("Add vortex", &gui.right_click_action, ADD_VORTEX_FORCE); ImGui::SameLine();
-	ImGui::RadioButton("Add gravity point", &gui.right_click_action, ADD_GRAVITY_FORCE);
+	ImGui::RadioButton("Add attractive force", &gui.right_click_action, ADD_GRAVITY_FORCE);
 
 	if (gui.right_click_action == SPAWN_PARTICLES)
 	{
@@ -186,14 +186,26 @@ void scene_structure::display_gui()
 				field_quad.texture.initialize_texture_2d_on_gpu(field);
 			}
 			ImGui::RadioButton("Fluid color", &gui.color_type, FLUID_COLOR);ImGui::SameLine();
-			ImGui::RadioButton("Velocity", &gui.color_type, VELOCITY);
+			ImGui::RadioButton("Velocity", &gui.color_type, VELOCITY);ImGui::SameLine();
+			ImGui::RadioButton("Density", &gui.color_type, DENSITY);
 
-			if (gui.color_type == VELOCITY)
+			if (gui.color_type == VELOCITY || gui.color_type == DENSITY)
 			{
 				ImGui::SliderFloat("Smoothing radius", &gui.color_smoothing_radius, 0.0f, 0.3f);
 
-				bool min_changed = ImGui::SliderFloat("Velocity min", &gui.threshold_min, 0.0f, 10.0f);
-				bool max_changed = ImGui::SliderFloat("Velocity max", &gui.threshold_max, 0.0f, 10.0f);
+				bool min_changed = false;
+				bool max_changed = false;
+				if (gui.color_type == VELOCITY)
+				{
+					min_changed = ImGui::SliderFloat("Velocity min", &gui.threshold_min, 0.0f, 1.0f);
+					max_changed = ImGui::SliderFloat("Velocity max", &gui.threshold_max, 0.0f, 1.0f);
+				}
+				else if (gui.color_type == DENSITY)
+				{
+					min_changed = ImGui::SliderFloat("Density min", &gui.threshold_min, 0.0f, 1.0f);
+					max_changed = ImGui::SliderFloat("Density max", &gui.threshold_max, 0.0f, 1.0f);
+				}
+
 				if (gui.threshold_min > gui.threshold_max) {
 					if (min_changed)
 						gui.threshold_max = gui.threshold_min + 0.01f;

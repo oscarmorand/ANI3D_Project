@@ -24,10 +24,19 @@ vec3 scene_structure::get_particle_color(particle_element const &particle)
 	}
 	case VELOCITY:
 	{
-		vec3 const v = particle.v;
+		vec3 const v = particle.v / 10.0f;
 		res = color_clamp(
 			color_interpolation(
 				gui.color_min, gui.color_max, gui.threshold_min, gui.threshold_max, norm(v)),
+			0.0, 1.0);
+		break;
+	}
+	case DENSITY:
+	{
+		float const rho = particle.rho / 5000.0f;
+		res = color_clamp(
+			color_interpolation(
+				gui.color_min, gui.color_max, gui.threshold_min, gui.threshold_max, rho),
 			0.0, 1.0);
 		break;
 	}
@@ -107,7 +116,7 @@ void scene_structure::update_field_color()
 	{
 		update_field_closest(Nf);
 	}
-	else if (gui.color_type == VELOCITY)
+	else if (gui.color_type == VELOCITY || gui.color_type == DENSITY)
 	{
 		update_field_mean(Nf);
 	}
