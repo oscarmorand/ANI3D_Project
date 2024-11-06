@@ -13,7 +13,7 @@ static float gaussian(vec3 const& p, vec3 const& p0, float sigma)
 float field_function_structure::operator()(cgp::vec3 const& p, cgp::numarray<particle_element> particules) const
 {
 	float value = 0.0f;
-
+	#pragma omp parallel for
 	for (int i = 0; i < particules.size(); i++) {
 		vec3 const& p0 = particules[i].p;
 		float const d = norm(p - p0);

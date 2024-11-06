@@ -96,11 +96,15 @@ void implicit_surface_structure::set_domain(int samples, cgp::vec3 const& length
 grid_3D<float> compute_discrete_scalar_field(spatial_domain_grid_3D const& domain, field_function_structure const& func, cgp::numarray<particle_element> particules)
 {
 	grid_3D<float> field;
+
 	field.resize(domain.samples);
     
 	// Fill the discrete field values
+    #pragma omp parallel for
 	for (int kz = 0; kz < domain.samples.z; kz++) {
+        #pragma omp parallel for
 		for (int ky = 0; ky < domain.samples.y; ky++) {
+            #pragma omp parallel for
 			for (int kx = 0; kx < domain.samples.x; kx++) {
 
 				vec3 const p = domain.position({ kx, ky, kz });
