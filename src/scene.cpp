@@ -118,19 +118,24 @@ void scene_structure::initialize_sph()
 		}
 	}
 
-	if (dimension == DIM_2D) {
-		// Initialize the spatial grid
-		float const cell_size = 2.0f * h;
+	float const cell_size = 2.0f * h;
 		
-		int const grid_width = int(ceil(2.0f / cell_size));
-		int const grid_height = int(ceil(2.0f / cell_size));
+	int const grid_width = int(ceil(2.0f / cell_size));
+	int const grid_height = int(ceil(2.0f / cell_size));
 
+	if (dimension == DIM_2D) {
 		vec2 const min = {-1.0f, -1.0f};
 
-		grid = spatial_grid(cell_size, grid_width, grid_height, min);
-
-		std::cout << "Grid initialized" << std::endl;
+		grid_2d = spatial_grid_2d(cell_size, grid_width, grid_height, min);
 	}
+	else {
+		int const grid_depth = int(ceil(2.0f / cell_size));
+
+		vec3 const min = {-1.0f, -1.0f, -1.0f};
+
+		grid_3d = spatial_grid_3d(cell_size, grid_width, grid_height, grid_depth, min);
+	}
+	std::cout << "Grid initialized" << std::endl;
 }
 
 void scene_structure::display_frame()
@@ -145,16 +150,23 @@ void scene_structure::display_frame()
 
 		if (dimension == DIM_2D) {
 			// Update the spatial grid
-			grid.clear_grid();
+			grid_2d.clear_grid();
 			for (size_t k = 0; k < particles.size(); ++k)
 			{
-				grid.insert_particle(&particles[k]);
+				grid_2d.insert_particle(&particles[k]);
 			}
 
-			simulate_2d(dt, particles, grid, sph_parameters);
+			simulate_2d(dt, particles, grid_2d, sph_parameters);
 		}
-		else
-			simulate_3d(dt, particles, sph_parameters);
+		else {
+			grid_3d.clear_grid();
+			for (size_t k = 0; k < particles.size(); ++k)
+			{
+				grid_3d.insert_particle(&particles[k]);
+			}
+			
+			simulate_3d(dt, particles, grid_3d, sph_parameters);
+		}
 
 		if (inputs.mouse.click.right)
 		{ // Special action

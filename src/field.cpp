@@ -54,10 +54,10 @@ void scene_structure::update_field_closest(int Nf)
 		{
 			vec3 full_color = {0, 0, 0};  // Store the resulting color
 			vec3 const p0 = {2.0f * (kx / (Nf - 1.0f) - 0.5f), 2.0f * (ky / (Nf - 1.0f) - 0.5f), 0.0f};
-			int cell_index = grid.compute_cell_index(p0);
+			int cell_index = grid_2d.compute_cell_index(p0);
 			float min_dist = sph_parameters.h;
 
-			std::vector<particle_element*> neighbors = grid.get_neighbors(cell_index);
+			std::vector<particle_element*> neighbors = grid_2d.get_neighbors(cell_index);
 
 			for (particle_element* particle : neighbors)
 			{

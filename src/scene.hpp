@@ -70,7 +70,8 @@ struct scene_structure : cgp::scene_inputs_generic {
 
 	sph_parameters_structure sph_parameters; // Physical parameter related to SPH
 	cgp::numarray<particle_element> particles;      // Storage of the particles
-	spatial_grid grid; // Spatial grid used to accelerate the computation of the SPH
+	spatial_grid_2d grid_2d; // Spatial grid used to accelerate the computation of the SPH
+	spatial_grid_3d grid_3d; // Spatial grid used to accelerate the computation of the SPH
 	cgp::numarray<std::shared_ptr<fluid_class>> fluid_classes;       // Storage of the different fluids present in the scene
 	cgp::mesh_drawable sphere_particle; // Sphere used to display a particle
 	cgp::curve_drawable curve_visual;   // Circle used to display the radius h of influence
