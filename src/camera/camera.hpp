@@ -22,6 +22,8 @@ struct camera : camera_generic_base
     vec3 position() const;                  // Position of the camera frame
     rotation_transform orientation() const; // Orientation of the camera frame
 
+    vec3 get_view_direction() const; // Get the view direction of the camera
+
     void manipulator_rotate_arcball(vec2 const &p0, vec2 const &p1);
     void manipulator_rotate_roll_pitch_yaw(float roll, float pitch, float yaw);
     void manipulator_scale_distance_to_center(float magnitude);

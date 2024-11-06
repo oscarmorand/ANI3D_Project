@@ -46,6 +46,10 @@ struct gui_parameters {
 	vec3 color_max = { 1,0,0 };
 };
 
+struct base_plan {
+	vec3 normal;
+};
+
 // The structure of the custom scene
 struct scene_structure : cgp::scene_inputs_generic {
 
@@ -107,6 +111,7 @@ struct scene_structure : cgp::scene_inputs_generic {
 	void add_vortex_force(vec3 const &center, float radius, float strength);
 	void add_gravity_force(vec3 const &center, float radius, float strength);
 
+	base_plan get_most_orthogonal_plan(vec3 const &dir);
 	void right_click();
 	void mouse_move_event();
 	void mouse_click_event();
