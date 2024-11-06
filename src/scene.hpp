@@ -13,6 +13,9 @@
 #include "simulation/simulation_3d.hpp"
 #include "simulation/simulation_2d.hpp"
 
+#include "implicit_surface/implicit_surface.hpp"
+#include "implicit_surface/field_function.hpp"
+
 using cgp::mesh_drawable;
 
 struct gui_parameters {
@@ -82,6 +85,9 @@ struct scene_structure : cgp::scene_inputs_generic {
 
 	cgp::grid_2D<cgp::vec3> field;      // grid used to represent the volume of the fluid under the particles
 	cgp::mesh_drawable field_quad; // quad used to display this field color
+
+	implicit_surface_structure implicit_surface;
+	field_function_structure field_function;
 
 
 	// ****************************** //

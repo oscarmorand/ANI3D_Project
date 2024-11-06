@@ -24,6 +24,10 @@ void scene_structure::initialize()
 	sphere_particle.model.scaling = 0.01f;
 	curve_visual.color = {1, 0, 0};
 	curve_visual.initialize_data_on_gpu(curve_primitive_circle());
+
+	vec3 const length = {2,2,2};
+	float isovalue = 0.5f;
+	implicit_surface.set_domain(25, length);
 }
 
 void scene_structure::spawn_particle(vec3 const &pos, int fluid_type)
@@ -94,7 +98,7 @@ void scene_structure::initialize_fluid_classes()
 void scene_structure::initialize_sph()
 {
 	// Initial particle spacing (relative to h)
-	float const c = 1.0f;
+	float const c = 3.0f;
 	float const h = sph_parameters.h;
 
 	// Fill a square with particles
@@ -176,13 +180,16 @@ void scene_structure::display_frame()
 
 	if (gui.display_particles)
 	{
-		for (int k = 0; k < particles.size(); ++k)
+		//Create a field that represents each particle force.
+		/* for (int k = 0; k < particles.size(); ++k)
 		{
 			vec3 const &p = particles[k].p;
 			sphere_particle.model.translation = p;
 			sphere_particle.material.color = particles[k].color;
 			draw(sphere_particle, environment);
-		}
+		} */
+		implicit_surface.update_field(field_function, 0.5f, particles);
+		draw(implicit_surface.drawable_param.shape, environment);
 	}
 
 	if (gui.display_radius)
