@@ -26,8 +26,8 @@ void scene_structure::initialize()
 	curve_visual.initialize_data_on_gpu(curve_primitive_circle());
 
 	vec3 const length = {2,2,2};
-	float isovalue = 0.5f;
-	implicit_surface.set_domain(25, length);
+	implicit_surface.set_domain(35, length);
+	//implicit_surface.update_field(field_function, 1.0f, particles);
 }
 
 void scene_structure::spawn_particle(vec3 const &pos, int fluid_type)
@@ -146,7 +146,7 @@ void scene_structure::display_frame()
 {
 	// Set the light to the current position of the camera
 	// environment.light = camera_control.camera_model.position();
-
+	
 	if (timer.is_running())
 	{
 		timer.update(); // update the timer to the current elapsed time
@@ -180,14 +180,15 @@ void scene_structure::display_frame()
 
 	if (gui.display_particles)
 	{
+
 		//Create a field that represents each particle force.
-		/* for (int k = 0; k < particles.size(); ++k)
+		 for (int k = 0; k < particles.size(); ++k)
 		{
 			vec3 const &p = particles[k].p;
 			sphere_particle.model.translation = p;
 			sphere_particle.material.color = particles[k].color;
 			draw(sphere_particle, environment);
-		} */
+		}
 		implicit_surface.update_field(field_function, 0.5f, particles);
 		draw(implicit_surface.drawable_param.shape, environment);
 	}
@@ -310,6 +311,8 @@ void scene_structure::right_click()
 			add_gravity_force(p, gui.spawn_particle_radius, gui.force_strength);
 	}
 	else {
+		if (gui.right_click_action == SPAWN_PARTICLES)
+			spawn_particles_in_disk(p, gui.spawn_particle_radius, gui.spawn_particle_number, gui.spawn_particle_type);
 		/*
 		vec3 cam_dir = camera_control.camera_model.get_view_direction();
 		base_plan plan = get_most_orthogonal_plan(cam_dir);

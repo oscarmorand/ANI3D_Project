@@ -2,6 +2,7 @@
 
 #include <map>
 #include <list>
+#include <chrono>
 
 #include "cgp/cgp.hpp"
 #include "environment.hpp"

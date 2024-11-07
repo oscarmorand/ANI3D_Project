@@ -38,6 +38,8 @@ void implicit_surface_structure::update_marching_cube(float isovalue)
 
 	// Compute the Marching Cube
 	number_of_vertex = marching_cube(position, field.data.data, domain, isovalue, &relative_coord);
+	if (number_of_vertex == 0)
+		return;
 
 	// Resize the vector of normals if needed
 	if (normal.size() < position.size())
@@ -53,6 +55,7 @@ void implicit_surface_structure::update_marching_cube(float isovalue)
 	}
 	else {
 		// Otherwise simply update the new relevant values re-using the allocated buffers
+
 		drawable_param.shape.vbo_position.update(position, number_of_vertex);
 		drawable_param.shape.vbo_normal.update(normal, number_of_vertex);
 		drawable_param.shape.vertex_number = number_of_vertex;
@@ -62,7 +65,7 @@ void implicit_surface_structure::update_marching_cube(float isovalue)
 
 
 
-void implicit_surface_structure::update_field(field_function_structure const& field_function, float isovalue, cgp::numarray<particle_element> particules)
+void implicit_surface_structure::update_field(field_function_structure const& field_function, float isovalue, cgp::numarray<particle_element> particles)
 {
 	// Variable shortcut
 	grid_3D<float>& field = field_param.field;
@@ -70,7 +73,7 @@ void implicit_surface_structure::update_field(field_function_structure const& fi
 	spatial_domain_grid_3D& domain = field_param.domain;
 
 	// Compute the scalar field
-	field = compute_discrete_scalar_field(domain, field_function, particules);
+	field = compute_discrete_scalar_field(domain, field_function, particles);
 
 	// Compute the gradient of the scalar field
 	gradient = compute_gradient(field);
@@ -93,26 +96,50 @@ void implicit_surface_structure::set_domain(int samples, cgp::vec3 const& length
 
 
 
-grid_3D<float> compute_discrete_scalar_field(spatial_domain_grid_3D const& domain, field_function_structure const& func, cgp::numarray<particle_element> particules)
+grid_3D<float> compute_discrete_scalar_field(spatial_domain_grid_3D const& domain, field_function_structure const& func, cgp::numarray<particle_element> particles)
 {
 	grid_3D<float> field;
-
+	float influence_radius = 0.2f;
+	float radius2 = influence_radius * influence_radius;
+	float radius22 = 2 * radius2;
 	field.resize(domain.samples);
-    
-	// Fill the discrete field values
-    #pragma omp parallel for
-	for (int kz = 0; kz < domain.samples.z; kz++) {
-        #pragma omp parallel for
-		for (int ky = 0; ky < domain.samples.y; ky++) {
-            #pragma omp parallel for
-			for (int kx = 0; kx < domain.samples.x; kx++) {
+	cgp::vec3 voxel_length = domain.voxel_length();
+    for (const auto& particle : particles) {
+		
+		int min_x = std::max(0, int((particle.p.x - influence_radius + 1) * domain.samples.x / domain.length.x));
+		int max_x = std::min(domain.samples.x - 1, int((particle.p.x + influence_radius+ 1) * domain.samples.x / domain.length.x));
+		int min_y = std::max(0, int((particle.p.y - influence_radius+ 1) * domain.samples.y / domain.length.y));
+		int max_y = std::min(domain.samples.y - 1, int((particle.p.y + influence_radius+ 1) * domain.samples.y / domain.length.y));
+		int min_z = std::max(0, int((particle.p.z - influence_radius+ 1) * domain.samples.z / domain.length.z));
+		int max_z = std::min(domain.samples.z - 1, int((particle.p.z + influence_radius+ 1) * domain.samples.z / domain.length.z));
 
-				vec3 const p = domain.position({ kx, ky, kz });
-				field(kx, ky, kz) = func(p, particules);
-
+		#pragma omp parallel for
+		for (int kz = min_z; kz < max_z; kz++) {
+			#pragma omp parallel for
+			for (int ky = min_y; ky < max_y; ky++) {
+				#pragma omp parallel for
+				for (int kx = min_x; kx < max_x; kx++) {
+					vec3 const p = domain.position({ kx, ky, kz });
+					field(kx, ky, kz) += func(p, particle.p, radius2, radius22);
+				}
 			}
 		}
-	}
+		
+
+/*
+		#pragma omp parallel for
+			for (int kz = 0; kz < domain.samples.z; kz++) {
+				#pragma omp parallel for
+				for (int ky = 0; ky < domain.samples.y; ky++) {
+					#pragma omp parallel for
+					for (int kx = 0; kx < domain.samples.x; kx++) {
+						vec3 const p = domain.position({ kx, ky, kz });
+						field(kx, ky, kz) += func(p, particle.p, influence_radius);
+					}
+				}
+			}*/
+			
+		}
 
 	return field;
 }

@@ -10,7 +10,7 @@
 struct field_function_structure {
 
 	// Query the value of the function at any point p
-	float operator()(cgp::vec3 const& p, cgp::numarray<particle_element> particules) const;
+	float operator()(cgp::vec3 const& p, cgp::vec3 const& particle, float radius2, float  radius22) const;
 
 
 	// ***************************//
