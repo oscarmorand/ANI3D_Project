@@ -36,6 +36,8 @@ struct gui_parameters {
 	bool display_particles = true;
 	bool display_radius = false;
 
+	float particle_radius_ratio = 0.1f;
+
 	int grid_size = 50;
 
 	int color_type = FLUID_COLOR;
@@ -93,6 +95,7 @@ struct scene_structure : cgp::scene_inputs_generic {
 	void display_frame(); // The frame display to be called within the animation loop
 	void display_gui();   // The display of the GUI, also called within the animation loop
 
+	void select_color_mode();
 	void new_fluid_gui();
 
 	void update_field_closest(int Nf);

@@ -180,7 +180,8 @@ void scene_structure::display_frame()
 		{
 			vec3 const &p = particles[k].p;
 			sphere_particle.model.translation = p;
-			sphere_particle.material.color = particles[k].color;
+			sphere_particle.model.scaling = gui.particle_radius_ratio * sph_parameters.h;
+			sphere_particle.material.color = get_particle_color(particles[k]);
 			draw(sphere_particle, environment);
 		}
 	}
