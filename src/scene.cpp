@@ -224,7 +224,8 @@ void scene_structure::add_vortex_force(vec3 const &center, float radius, float s
 		vec3 const &p = particles[k].p;
 		vec3 const diff = center - p;
 		if (norm(diff) < radius) {
-			vec3 const dir = cross(vec3(0,0,-1), normalize(diff));
+			vec3 dir = cross(vec3(0,0,-1), normalize(diff));
+			dir = dir * (gui.vortex_direction == CLOCKWISE ? -1.0f : 1.0f);
 			vec3 force = strength * dir;
 			particles[k].external_forces += force;
 		}

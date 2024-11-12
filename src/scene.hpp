@@ -30,6 +30,7 @@ struct gui_parameters {
 	//std::vector<std::shared_ptr<bool>> new_fluid_soluble;
 
 	float force_strength = 1.0f;
+	int vortex_direction = CLOCKWISE;
 
 	bool display_color = true;
 	bool display_particles = true;

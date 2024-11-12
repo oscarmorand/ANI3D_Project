@@ -168,6 +168,11 @@ void scene_structure::display_gui()
 		else
 			ImGui::SliderFloat("Radius of force sphere", &gui.spawn_particle_radius, 0.01f, 1.0f, "%0.2f");
 		ImGui::SliderFloat("Force strength", &gui.force_strength, 0.01f, 3.0f, "%0.2f");
+		if (gui.right_click_action == ADD_VORTEX_FORCE)
+		{
+			ImGui::RadioButton("Clockwise", &gui.vortex_direction, CLOCKWISE); ImGui::SameLine();
+			ImGui::RadioButton("Counter-clockwise", &gui.vortex_direction, COUNTER_CLOCKWISE);
+		}
 	}
 
 	ImGui::Spacing();ImGui::Spacing();ImGui::Spacing();
