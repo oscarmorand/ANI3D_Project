@@ -239,7 +239,7 @@ void scene_structure::display_gui()
 	ImGui::Text("Display options");
 	if (dimension == DIM_2D)
 	{
-		ImGui::Checkbox("Color", &gui.display_color);
+		ImGui::Checkbox("Color grid", &gui.display_color);
 
 		if (gui.display_color)
 		{
