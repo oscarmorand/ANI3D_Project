@@ -47,6 +47,8 @@ struct gui_parameters {
 	float threshold_max = 1.0f;
 	vec3 color_min = { 0,0,1 };
 	vec3 color_max = { 1,0,0 };
+
+	int nb_particles = 0;
 };
 
 struct base_plan {

@@ -41,6 +41,7 @@ void scene_structure::spawn_particle(vec3 const &pos, int fluid_type)
 	particle.fluid_type = fluid_class;
 
 	particles.push_back(particle);
+	gui.nb_particles += 1;
 }
 
 void scene_structure::spawn_random_type_particle(vec3 const &center) {
@@ -215,6 +216,7 @@ void scene_structure::delete_particles_in_disk(vec3 const &center, float radius)
 			new_particles.push_back(particles[k]);
 	}
 	particles = new_particles;
+	gui.nb_particles = particles.size();
 }
 
 void scene_structure::add_vortex_force(vec3 const &center, float radius, float strength)

@@ -82,7 +82,8 @@ void scene_structure::select_color_mode()
 
 	if (gui.color_type == VELOCITY || gui.color_type == DENSITY)
 	{
-		ImGui::SliderFloat("Smoothing radius", &gui.color_smoothing_radius, 0.0f, 0.3f);
+		if (gui.display_color)
+			ImGui::SliderFloat("Smoothing radius", &gui.color_smoothing_radius, 0.0f, 0.3f);
 
 		bool min_changed = false;
 		bool max_changed = false;
@@ -113,6 +114,9 @@ void scene_structure::select_color_mode()
 
 void scene_structure::display_gui()
 {
+	std::string nb_particles_txt = str(gui.nb_particles)+" particles";
+	ImGui::Text( nb_particles_txt.c_str(), "%s" );
+
 	bool change_dimension = ImGui::RadioButton("2D", &dimension, DIM_2D);
 	ImGui::SameLine();
 	change_dimension |= ImGui::RadioButton("3D", &dimension, DIM_3D);
@@ -149,8 +153,10 @@ void scene_structure::display_gui()
 	}
 
 	bool const clear_particles = ImGui::Button("Clear particles");
-	if (clear_particles)
+	if (clear_particles) {
 		particles.clear();
+		gui.nb_particles = 0;
+	}
 
 	ImGui::Spacing();
 	ImGui::Spacing();
@@ -262,5 +268,5 @@ void scene_structure::display_gui()
 		}
 	}
 
-	ImGui::Checkbox("Radius", &gui.display_radius);
+	ImGui::Checkbox("Radius of search kernel", &gui.display_radius);
 }
