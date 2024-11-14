@@ -52,6 +52,7 @@ void scene_structure::spawn_particle(vec3 const &pos, int fluid_type)
 	particle.fluid_type = fluid_class;
 
 	particles.push_back(particle);
+	gui.nb_particles += 1;
 }
 
 void scene_structure::spawn_particle(vec3 const &pos, int fluid_type, vec3 const &velocity)
@@ -211,7 +212,8 @@ if (timer.is_running())
 		{
 			vec3 const &p = particles[k].p;
 			sphere_particle.model.translation = p;
-			sphere_particle.material.color = particles[k].color;
+			sphere_particle.model.scaling = gui.particle_radius_ratio * sph_parameters.h;
+			sphere_particle.material.color = get_particle_color(particles[k]);
 			draw(sphere_particle, environment);
 		}
 	}
@@ -263,6 +265,7 @@ void scene_structure::delete_particles_in_disk(vec3 const &center, float radius)
 			new_particles.push_back(particles[k]);
 	}
 	particles = new_particles;
+	gui.nb_particles = particles.size();
 }
 
 void scene_structure::add_vortex_force(vec3 const &center, float radius, float strength)
@@ -273,7 +276,8 @@ void scene_structure::add_vortex_force(vec3 const &center, float radius, float s
 		vec3 const &p = particles[k].p;
 		vec3 const diff = center - p;
 		if (norm(diff) < radius) {
-			vec3 const dir = cross(vec3(0,0,-1), normalize(diff));
+			vec3 dir = cross(vec3(0,0,-1), normalize(diff));
+			dir = dir * (gui.vortex_direction == CLOCKWISE ? -1.0f : 1.0f);
 			vec3 force = strength * dir;
 			particles[k].external_forces += force;
 		}

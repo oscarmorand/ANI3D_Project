@@ -34,11 +34,14 @@ struct gui_parameters {
 	//std::vector<std::shared_ptr<bool>> new_fluid_soluble;
 
 	float force_strength = 1.0f;
+	int vortex_direction = CLOCKWISE;
 
 	bool display_color = true;
 	bool display_particles = true;
 	bool display_radius = false;
 	bool display_mesh = true;
+
+	float particle_radius_ratio = 0.1f;
 
 	int grid_size = 50;
 
@@ -53,7 +56,8 @@ struct gui_parameters {
 	//3D Mesh Rendering (Marching Cubes)
 	float influence_radius_MC = 0.2f;
 	float isovalue_MC = 0.5f;
-
+  
+	int nb_particles = 0;
 };
 
 struct base_plan {
@@ -107,6 +111,7 @@ struct scene_structure : cgp::scene_inputs_generic {
 	void display_frame(); // The frame display to be called within the animation loop
 	void display_gui();   // The display of the GUI, also called within the animation loop
 
+	void select_color_mode();
 	void new_fluid_gui();
 
 	void update_field_closest(int Nf);

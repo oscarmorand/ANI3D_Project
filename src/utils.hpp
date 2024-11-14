@@ -18,3 +18,8 @@ enum right_click_action_enum {
 	ADD_VORTEX_FORCE,
 	ADD_GRAVITY_FORCE
 };
+
+enum vortex_direction_enum {
+	CLOCKWISE,
+	COUNTER_CLOCKWISE
+};
