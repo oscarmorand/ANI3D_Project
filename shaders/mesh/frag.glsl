@@ -56,6 +56,8 @@ struct material_structure
 	vec3 color;  // Uniform color of the object
 	float alpha; // alpha coefficient
 
+	float reflectivness;
+
 	phong_structure phong;                       // Phong coefficients
 	texture_settings_structure texture_settings; // Additional settings for the texture
 }; 

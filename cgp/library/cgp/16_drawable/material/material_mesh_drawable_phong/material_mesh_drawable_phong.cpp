@@ -11,6 +11,7 @@ namespace cgp
 	{
 		opengl_uniform(shader, "material.color", color, expected);
 		opengl_uniform(shader, "material.alpha", alpha, expected);
+		opengl_uniform(shader, "material.reflectivness", reflectivness, false);
 
 		opengl_uniform(shader, "material.phong.ambient", phong.ambient, expected);
 		opengl_uniform(shader, "material.phong.diffuse", phong.diffuse, expected);

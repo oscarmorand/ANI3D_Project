@@ -2,7 +2,8 @@
 
 enum color_type_enum {
 	FLUID_COLOR,
-	VELOCITY
+	VELOCITY,
+	DENSITY
 };
 
 enum dimension_enum {
@@ -13,11 +14,17 @@ enum dimension_enum {
 enum right_click_action_enum {
 	SPAWN_PARTICLES,
 	REMOVE_PARTICLES,
-	ADD_FORCE
+	ADD_RADIAL_FORCE,
+	ADD_VORTEX_FORCE,
+	ADD_GRAVITY_FORCE
 };
 
-enum fluid_type_enum {
-	WATER,
-	MILK,
-	OIL
+enum vortex_direction_enum {
+	CLOCKWISE,
+	COUNTER_CLOCKWISE
+};
+
+enum display_mode_3d_enum {
+	MESH,
+	POINTS
 };

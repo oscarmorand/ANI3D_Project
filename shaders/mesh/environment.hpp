@@ -1,6 +1,5 @@
 #pragma once
 
-#include <chrono>
 #include "cgp/cgp.hpp"
 
 using namespace cgp;

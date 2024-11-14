@@ -17,6 +17,11 @@ rotation_transform camera::orientation() const
 	return orientation_camera;
 }
 
+vec3 camera::get_view_direction() const
+{
+	return -orientation_camera.matrix_col_z();
+}
+
 void camera::manipulator_rotate_arcball(vec2 const &p0, vec2 const &p1)
 {
 	rotation_transform const r = trackball_rotation(p0, p1);

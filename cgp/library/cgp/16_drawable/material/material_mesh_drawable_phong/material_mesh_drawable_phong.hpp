@@ -21,6 +21,8 @@ namespace cgp
 		vec3 color = vec3{ 1.0f,1.0f,1.0f };    // Global RGB-color of the object
 		float alpha = 1.0;                      // Alpha component of the uniform color RGBA (can be used for transparency)
 
+		float reflectivness = 1.0;
+
 		phong_parameters phong;                       // Phong parameters
 		texture_settings_parameters texture_settings; // Specific settings for the texture (the texture id is stored directly in the mesh_drawable)
 

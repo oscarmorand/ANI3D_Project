@@ -107,9 +107,18 @@ void animation_loop()
 
 	vec3 const& background_color = scene.environment.background_color;
 	glClearColor(background_color.x, background_color.y, background_color.z, 1.0f);
+	glEnable(GL_DEPTH_TEST);
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClear(GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	glBlendEquationSeparate(GL_FUNC_ADD, GL_FUNC_ADD);
+
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		std::cerr << "Depth framebuffer is not complete!" << std::endl;
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0); // Unbind the framebuffer
 
 	float const time_interval = fps_record.update();
 	if (fps_record.event) {
@@ -154,7 +163,9 @@ void initialize_default_shaders()
 	triangles_drawable::default_shader.load(default_path_shaders +"mesh/mesh.vert.glsl", default_path_shaders +"mesh/mesh.frag.glsl");
 
 	// Set default white texture
+	
 	image_structure const white_image = image_structure{ 1,1,image_color_type::rgba,{255,255,255,255} };
+	//image_structure const forest_image = image_load_jpg("../assets/images/tree.jpg");
 	mesh_drawable::default_texture.initialize_texture_2d_on_gpu(white_image);
 	triangles_drawable::default_texture.initialize_texture_2d_on_gpu(white_image);
 

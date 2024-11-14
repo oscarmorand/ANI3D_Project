@@ -27,8 +27,6 @@ void environment_structure::send_opengl_uniform(opengl_shader_structure const& s
 	opengl_uniform(shader, "projection", camera_projection, expected);
 	opengl_uniform(shader, "view", camera_view, expected);
 	opengl_uniform(shader, "light", light, false);
-	
-	opengl_uniform(shader, "time", std::chrono::duration<float>(std::chrono::system_clock::now().time_since_epoch()).count(), expected);
 
 	uniform_generic.send_opengl_uniform(shader, expected);
 
