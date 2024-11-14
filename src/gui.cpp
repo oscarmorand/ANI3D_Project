@@ -159,12 +159,6 @@ void scene_structure::display_gui()
 	}
 
 	ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
-	if (dimension == DIM_3D)
-	{
-		ImGui::Text("Rendering parameters (marching cubes)");
-		ImGui::SliderFloat("Influence radius", &gui.influence_radius_MC, 0.0f, 0.5f, "%0.5f");
-		ImGui::SliderFloat("Isovalue", &gui.isovalue_MC, 0.0f, 1.0f, "%0.5f");
-	}
 	ImGui::Text("Simulation parameters");
 	ImGui::SliderFloat("Timer scale", &timer.scale, 0.01f, 4.0f, "%0.2f");
 	ImGui::SliderFloat("Gravity", &sph_parameters.gravity_strength, 0.0f, 30.0f, "%0.1f");
@@ -272,18 +266,20 @@ void scene_structure::display_gui()
 		ImGui::RadioButton("Particles", &gui.display_mode_3d, POINTS);
 
 		if (gui.display_mode_3d == MESH) {
+			ImGui::Text("Rendering parameters (marching cubes)");
+			ImGui::SliderFloat("Influence radius", &gui.influence_radius_MC, 0.0f, 0.5f, "%0.5f");
+			ImGui::SliderFloat("Isovalue", &gui.isovalue_MC, 0.0f, 1.0f, "%0.5f");
+			ImGui::SliderFloat("Mesh alpha", &gui.alpha, 0.01f, 1.0f, "%0.3f");
+			ImGui::Checkbox("Skybox", &gui.display_skybox);
 			gui.display_mesh = true;
 			gui.display_particles = false;
 		}
 		else {
 			gui.display_mesh = false;
 			gui.display_particles = true;
+			gui.display_skybox = false;
 		}
 	}
-	ImGui::Checkbox("Mesh", &gui.display_mesh);
-	ImGui::SliderFloat("Mesh alpha", &gui.alpha, 0.01f, 1.0f, "%0.3f");
-	ImGui::Checkbox("Particles", &gui.display_particles);
-	ImGui::Checkbox("Skybox", &gui.display_skybox);
 	if (gui.display_particles)
 	{
 		ImGui::SliderFloat("Radius", &gui.particle_radius_ratio, 0.01f, 1.0f, "%0.2f");

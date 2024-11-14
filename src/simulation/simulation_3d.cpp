@@ -33,6 +33,7 @@ void simulate_3d(float dt, cgp::numarray<particle_element>& particles, spatial_g
 
         // small perturbation to avoid alignment
         if( p.y<-1 ) {p.y = -1+epsilon*rand_uniform();  v.y *= -0.5f;}
+        if( p.y>1 )  {p.y =  1-epsilon*rand_uniform();  v.y *= -0.5f;}
         if( p.x<-1 ) {p.x = -1+epsilon*rand_uniform();  v.x *= -0.5f;}
         if( p.x>1 )  {p.x =  1-epsilon*rand_uniform();  v.x *= -0.5f;}
         if( p.z<-1 ) {p.z = -1+epsilon*rand_uniform();  v.z *= -0.5f;}
