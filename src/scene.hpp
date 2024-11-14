@@ -57,6 +57,7 @@ struct gui_parameters {
 	//3D Mesh Rendering (Marching Cubes)
 	float influence_radius_MC = 0.2f;
 	float isovalue_MC = 0.5f;
+	float alpha = 1.f;
   
 	int nb_particles = 0;
 };

@@ -47,7 +47,7 @@ struct implicit_surface_structure
 	// *************************************************** //
 
 	//   Recompute from scratch the field and the marching cube
-	void update_field(field_function_structure const& field_function, spatial_grid_3d particles, float isovalue, float radius);
+	void update_field(field_function_structure const& field_function, spatial_grid_3d particles, float isovalue, float radius, float alpha);
 
 	//   Recompute only the marching cube for a different isovalue (while minimize re-allocations)
 	void update_marching_cube(float isovalue);

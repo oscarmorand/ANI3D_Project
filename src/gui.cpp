@@ -265,6 +265,7 @@ void scene_structure::display_gui()
 		}
 	}
 	ImGui::Checkbox("Mesh", &gui.display_mesh);
+	ImGui::SliderFloat("Mesh alpha", &gui.alpha, 0.01f, 1.0f, "%0.3f");
 	ImGui::Checkbox("Particles", &gui.display_particles);
 	ImGui::Checkbox("Skybox", &gui.display_skybox);
 	if (gui.display_particles)
