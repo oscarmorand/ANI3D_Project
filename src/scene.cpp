@@ -37,24 +37,6 @@ void scene_structure::initialize()
 	implicit_surface.set_domain(50, length);
 }
 
-void scene_structure::spawn_particle(vec3 const &pos, int fluid_type)
-{
-	particle_element particle;
-	particle.p = pos;
-	particle.v = {0, 0, 0};
-	particle.f = {0, 0, 0};
-
-	auto const& fluid_class = fluid_classes[fluid_type];
-	particle.m = fluid_class->base_m;
-	particle.nu = fluid_class->base_nu;
-	particle.color = fluid_class->base_color;
-
-	particle.fluid_type = fluid_class;
-
-	particles.push_back(particle);
-	gui.nb_particles += 1;
-}
-
 void scene_structure::spawn_particle(vec3 const &pos, int fluid_type, vec3 const &velocity)
 {
 	particle_element particle;
@@ -70,6 +52,12 @@ void scene_structure::spawn_particle(vec3 const &pos, int fluid_type, vec3 const
 	particle.fluid_type = fluid_class;
 
 	particles.push_back(particle);
+	gui.nb_particles += 1;
+}
+
+void scene_structure::spawn_particle(vec3 const &pos, int fluid_type)
+{
+	spawn_particle(pos, fluid_type, {0, 0, 0});
 }
 
 void scene_structure::spawn_random_type_particle(vec3 const &center) {
