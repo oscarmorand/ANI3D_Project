@@ -30,8 +30,6 @@ void scene_structure::initialize()
 	skybox.initialize_data_on_gpu();
 	skybox.texture.initialize_cubemap_on_gpu(image_grid[1], image_grid[7], image_grid[5], image_grid[3], image_grid[10], image_grid[4]);
 
-
-	
 	shader_environment_map.load(project::path + "shaders/mesh/environment_map.vert.glsl", project::path + "shaders/mesh/environment_map.frag.glsl");
 	environment.uniform_generic.uniform_mat3["skybox_rotation"] = mat3::build_identity();
 	environment.default_expected_uniform = false;
@@ -174,31 +172,31 @@ void scene_structure::display_frame()
 {
 	// Set the light to the current position of the camera
 	// environment.light = camera_control.camera_model.position();
-	if (dimension == DIM_2D) {
-		grid_2d.clear_grid();
-		for (size_t k = 0; k < particles.size(); ++k)
-		{
-			grid_2d.insert_particle(&particles[k]);
-		}
-	}
-	else {
-		grid_3d.clear_grid();
-		for (size_t k = 0; k < particles.size(); ++k)
-		{
-			grid_3d.insert_particle(&particles[k]);
-		}
-	}
-	if (timer.is_running())
+
+if (timer.is_running())
 	{
-
-
 		timer.update(); // update the timer to the current elapsed time
 		float const dt = 0.005f * timer.scale;
 
-		if (dimension == DIM_2D)
+		if (dimension == DIM_2D) {
+			// Update the spatial grid
+			grid_2d.clear_grid();
+			for (size_t k = 0; k < particles.size(); ++k)
+			{
+				grid_2d.insert_particle(&particles[k]);
+			}
+
 			simulate_2d(dt, particles, grid_2d, sph_parameters);
-		else 
+		}
+		else {
+			grid_3d.clear_grid();
+			for (size_t k = 0; k < particles.size(); ++k)
+			{
+				grid_3d.insert_particle(&particles[k]);
+			}
+			
 			simulate_3d(dt, particles, grid_3d, sph_parameters);
+		}
 
 		if (inputs.mouse.click.right)
 		{ // Special action
@@ -221,9 +219,11 @@ void scene_structure::display_frame()
 	if (gui.display_mesh)
 	{
 		if (dimension == DIM_3D) {
+
 			glDepthMask(GL_FALSE);
 			draw(skybox, environment);
 			glDepthMask(GL_TRUE);
+
 			glDisable(GL_DEPTH_TEST);
 			implicit_surface.update_field(field_function, grid_3d, gui.isovalue_MC, gui.influence_radius_MC);
 			implicit_surface.drawable_param.shape.shader = shader_environment_map;
@@ -248,7 +248,6 @@ void scene_structure::display_frame()
 	{
 		update_field_color();
 		field_quad.texture.update(field);
-		field_quad.material.alpha = 0.5;
 		draw(field_quad, environment);
 	}
 }
