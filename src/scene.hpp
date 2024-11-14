@@ -58,7 +58,7 @@ struct gui_parameters {
 	float influence_radius_MC = 0.2f;
 	float isovalue_MC = 0.5f;
 	float alpha = 1.f;
-  
+	int display_mode_3d = MESH;
 	int nb_particles = 0;
 };
 

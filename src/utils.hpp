@@ -23,3 +23,8 @@ enum vortex_direction_enum {
 	CLOCKWISE,
 	COUNTER_CLOCKWISE
 };
+
+enum display_mode_3d_enum {
+	MESH,
+	POINTS
+};
