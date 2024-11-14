@@ -65,13 +65,14 @@ void implicit_surface_structure::update_marching_cube(float isovalue)
 
 
 
-void implicit_surface_structure::update_field(field_function_structure const& field_function, spatial_grid_3d particles, float isovalue, float radius, float alpha)
+void implicit_surface_structure::update_field(field_function_structure const& field_function, spatial_grid_3d particles, float alpha, float radius, float isovalue, float reflectivness)
 {
 	// Variable shortcut
 	grid_3D<float>& field = field_param.field;
 	grid_3D<vec3>& gradient = field_param.gradient;
 	spatial_domain_grid_3D& domain = field_param.domain;
 	drawable_param.shape.material.alpha = alpha;
+	drawable_param.shape.material.reflectivness = reflectivness;
 	// Compute the scalar field
 	field = compute_discrete_scalar_field(domain, field_function, particles, radius);
 

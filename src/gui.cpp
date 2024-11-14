@@ -267,9 +267,10 @@ void scene_structure::display_gui()
 
 		if (gui.display_mode_3d == MESH) {
 			ImGui::Text("Rendering parameters (marching cubes)");
-			ImGui::SliderFloat("Influence radius", &gui.influence_radius_MC, 0.0f, 0.5f, "%0.5f");
-			ImGui::SliderFloat("Isovalue", &gui.isovalue_MC, 0.0f, 1.0f, "%0.5f");
+			ImGui::SliderFloat("Influence radius", &gui.influence_radius_MC, 0.001f, 0.5f, "%0.5f");
+			ImGui::SliderFloat("Isovalue", &gui.isovalue_MC, 0.001f, 1.0f, "%0.5f");
 			ImGui::SliderFloat("Mesh alpha", &gui.alpha, 0.01f, 1.0f, "%0.3f");
+			ImGui::SliderFloat("Reflectivness", &gui.reflectivness, 0.00f, 1.0f, "%0.3f");
 			ImGui::Checkbox("Skybox", &gui.display_skybox);
 			gui.display_mesh = true;
 			gui.display_particles = false;

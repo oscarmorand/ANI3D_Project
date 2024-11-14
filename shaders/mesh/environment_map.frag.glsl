@@ -58,6 +58,8 @@ struct material_structure
 	vec3 color;  // Uniform color of the object
 	float alpha; // alpha coefficient
 
+	float reflectivness;
+
 	phong_structure phong;                       // Phong coefficients
 	texture_settings_structure texture_settings; // Additional settings for the texture
 }; 
@@ -125,19 +127,13 @@ void main()
 
 	// Get the color of the environment map
 	vec3 R_skybox = reflect(-V, N);
-	vec4 color_environment_map = texture(image_skybox, skybox_rotation*R_skybox);
-	float fresnel_factor = pow(1.0 - max(dot(N, V), 0.0), 10.0);
-	float refractive_index = 1.2f;
-	vec3 refraction_vector = refract(V, N, 1.0 / refractive_index);
-	vec4 color_refraction = texture(image_skybox, skybox_rotation * refraction_vector);
 	vec4 color_reflection = texture(image_skybox, skybox_rotation * R_skybox);
-	vec4 color_combined = mix(color_refraction, color_reflection, fresnel_factor);
 
 	// Compute Shading
 	// *************************************** //
 
 	// Compute the base color of the object based on: vertex color, uniform color, and texture
-	vec3 color_object  =  vec3(0.00f, 0.47f, 0.80f);
+	vec3 color_object = mix(material.color, color_reflection.rgb, material.reflectivness);
 
 
 	// Compute the final shaded color using Phong model

@@ -217,7 +217,7 @@ if (timer.is_running())
 	{
 		if (dimension == DIM_3D) {
 			glDisable(GL_DEPTH_TEST);
-			implicit_surface.update_field(field_function, grid_3d, gui.isovalue_MC, gui.influence_radius_MC, gui.alpha);
+			implicit_surface.update_field(field_function, grid_3d, gui.alpha, gui.influence_radius_MC, gui.isovalue_MC, gui.reflectivness);
 			implicit_surface.drawable_param.shape.shader = shader_environment_map;
 			implicit_surface.drawable_param.shape.supplementary_texture["image_skybox"] = skybox.texture;
 			draw(implicit_surface.drawable_param.shape, environment);

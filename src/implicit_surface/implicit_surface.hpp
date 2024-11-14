@@ -13,6 +13,7 @@
 // All the data used for the Implicit Surface 
 // ********************************************** //
 
+
 // Sub-structure that contains the discrete field data
 struct implicit_surface_field_structure {
 	cgp::spatial_domain_grid_3D domain;   // The domain where the discrete field is defined
@@ -47,7 +48,7 @@ struct implicit_surface_structure
 	// *************************************************** //
 
 	//   Recompute from scratch the field and the marching cube
-	void update_field(field_function_structure const& field_function, spatial_grid_3d particles, float isovalue, float radius, float alpha);
+	void update_field(field_function_structure const& field_function, spatial_grid_3d particles, float alpha, float radius, float isovalue, float reflectivness);
 
 	//   Recompute only the marching cube for a different isovalue (while minimize re-allocations)
 	void update_marching_cube(float isovalue);
