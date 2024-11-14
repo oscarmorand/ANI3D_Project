@@ -24,6 +24,17 @@ void scene_structure::initialize()
 	sphere_particle.model.scaling = 0.01f;
 	curve_visual.color = {1, 0, 0};
 	curve_visual.initialize_data_on_gpu(curve_primitive_circle());
+	
+	image_structure forest_image = image_load_file(project::path + "assets/images/skybox_01.jpg");
+	std::vector<image_structure> image_grid = image_split_grid(forest_image, 4, 3);
+	skybox.initialize_data_on_gpu();
+	skybox.texture.initialize_cubemap_on_gpu(image_grid[1], image_grid[7], image_grid[5], image_grid[3], image_grid[10], image_grid[4]);
+
+	shader_environment_map.load(project::path + "shaders/mesh/environment_map.vert.glsl", project::path + "shaders/mesh/environment_map.frag.glsl");
+	environment.uniform_generic.uniform_mat3["skybox_rotation"] = mat3::build_identity();
+	environment.default_expected_uniform = false;
+	vec3 const length = {2.4,2.4,2.4};
+	implicit_surface.set_domain(50, length);
 }
 
 void scene_structure::spawn_particle(vec3 const &pos, int fluid_type)
@@ -42,6 +53,23 @@ void scene_structure::spawn_particle(vec3 const &pos, int fluid_type)
 
 	particles.push_back(particle);
 	gui.nb_particles += 1;
+}
+
+void scene_structure::spawn_particle(vec3 const &pos, int fluid_type, vec3 const &velocity)
+{
+	particle_element particle;
+	particle.p = pos;
+	particle.v = velocity;
+	particle.f = {0, 0, 0};
+
+	auto const& fluid_class = fluid_classes[fluid_type];
+	particle.m = fluid_class->base_m;
+	particle.nu = fluid_class->base_nu;
+	particle.color = fluid_class->base_color;
+
+	particle.fluid_type = fluid_class;
+
+	particles.push_back(particle);
 }
 
 void scene_structure::spawn_random_type_particle(vec3 const &center) {
@@ -68,13 +96,15 @@ void scene_structure::spawn_particles_in_disk(vec3 const &center, float radius, 
 	}
 }
 
+
 void scene_structure::spawn_particles_in_sphere(vec3 const &center, float radius, int N, int fluid_type)
 {
 	for (int k = 0; k < N; ++k)
 	{
 		vec3 const u = {rand_uniform(), rand_uniform(), rand_uniform()};
 		vec3 const p = {center.x + radius * (2 * u.x - 1), center.y + radius * (2 * u.y - 1), center.z + radius * (2 * u.z - 1)};
-		spawn_particle(p, fluid_type);
+		vec3 const velocity = p - u;
+		spawn_particle(p, fluid_type, velocity * 3);
 	}
 }
 
@@ -82,7 +112,7 @@ void scene_structure::initialize_fluid_classes()
 {
 	auto water = std::make_shared<fluid_class>("Water", 1.0, 0.0005, vec3{0.1, 0.3, 1.0});
 	auto milk = std::make_shared<fluid_class>("Milk", 1.0, 0.0005, vec3{1.0, 1.0, 1.0});
-	auto oil = std::make_shared<fluid_class>("Oil", 0.1, 0.05, vec3{1.0, 1.0, 0.3});
+	auto oil = std::make_shared<fluid_class>("Oil", 0.92, 0.05, vec3{1.0, 1.0, 0.3});
 
 	water->soluble_classes.insert(milk);
 	milk->soluble_classes.insert(water);
@@ -95,7 +125,7 @@ void scene_structure::initialize_fluid_classes()
 void scene_structure::initialize_sph()
 {
 	// Initial particle spacing (relative to h)
-	float const c = 1.0f;
+	float const c = 3.0f;
 	float const h = sph_parameters.h;
 
 	// Fill a square with particles
@@ -132,7 +162,7 @@ void scene_structure::initialize_sph()
 	else {
 		int const grid_depth = int(ceil(2.0f / cell_size));
 
-		vec3 const min = {-1.0f, -1.0f, -1.0f};
+		vec3 const min = {-1.000001f, -1.000001f, -1.000001f};
 
 		grid_3d = spatial_grid_3d(cell_size, grid_width, grid_height, grid_depth, min);
 	}
@@ -144,7 +174,7 @@ void scene_structure::display_frame()
 	// Set the light to the current position of the camera
 	// environment.light = camera_control.camera_model.position();
 
-	if (timer.is_running())
+if (timer.is_running())
 	{
 		timer.update(); // update the timer to the current elapsed time
 		float const dt = 0.005f * timer.scale;
@@ -176,7 +206,8 @@ void scene_structure::display_frame()
 	}
 
 	if (gui.display_particles)
-	{
+	{	
+		//Create a field that represents each particle force.
 		for (int k = 0; k < particles.size(); ++k)
 		{
 			vec3 const &p = particles[k].p;
@@ -184,6 +215,24 @@ void scene_structure::display_frame()
 			sphere_particle.model.scaling = gui.particle_radius_ratio * sph_parameters.h;
 			sphere_particle.material.color = get_particle_color(particles[k]);
 			draw(sphere_particle, environment);
+		}
+	}
+
+	if (gui.display_mesh)
+	{
+		if (dimension == DIM_3D) {
+
+			glDepthMask(GL_FALSE);
+			draw(skybox, environment);
+			glDepthMask(GL_TRUE);
+
+			glDisable(GL_DEPTH_TEST);
+			implicit_surface.update_field(field_function, grid_3d, gui.isovalue_MC, gui.influence_radius_MC);
+			implicit_surface.drawable_param.shape.shader = shader_environment_map;
+			implicit_surface.drawable_param.shape.supplementary_texture["image_skybox"] = skybox.texture;
+			draw(implicit_surface.drawable_param.shape, environment);
+			glEnable(GL_DEPTH_TEST);
+
 		}
 	}
 
@@ -307,6 +356,14 @@ void scene_structure::right_click()
 			add_gravity_force(p, gui.spawn_particle_radius, gui.force_strength);
 	}
 	else {
+		if (gui.right_click_action == SPAWN_PARTICLES)
+			spawn_particles_in_sphere(p, gui.spawn_particle_radius, gui.spawn_particle_number, gui.spawn_particle_type);
+		else if (gui.right_click_action == ADD_RADIAL_FORCE)
+			add_radial_force(p, gui.spawn_particle_radius, gui.force_strength);
+		else if (gui.right_click_action == ADD_VORTEX_FORCE)
+			add_vortex_force(p, gui.spawn_particle_radius, gui.force_strength);
+		else if (gui.right_click_action == ADD_GRAVITY_FORCE)
+			add_gravity_force(p, gui.spawn_particle_radius, gui.force_strength);
 		/*
 		vec3 cam_dir = camera_control.camera_model.get_view_direction();
 		base_plan plan = get_most_orthogonal_plan(cam_dir);

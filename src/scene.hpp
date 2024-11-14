@@ -2,6 +2,7 @@
 
 #include <map>
 #include <list>
+#include <chrono>
 
 #include "cgp/cgp.hpp"
 #include "environment.hpp"
@@ -12,6 +13,9 @@
 #include "simulation/simulation.hpp"
 #include "simulation/simulation_3d.hpp"
 #include "simulation/simulation_2d.hpp"
+
+#include "implicit_surface/implicit_surface.hpp"
+#include "implicit_surface/field_function.hpp"
 
 using cgp::mesh_drawable;
 
@@ -35,6 +39,7 @@ struct gui_parameters {
 	bool display_color = true;
 	bool display_particles = true;
 	bool display_radius = false;
+	bool display_mesh = true;
 
 	float particle_radius_ratio = 0.1f;
 
@@ -48,6 +53,10 @@ struct gui_parameters {
 	vec3 color_min = { 0,0,1 };
 	vec3 color_max = { 1,0,0 };
 
+	//3D Mesh Rendering (Marching Cubes)
+	float influence_radius_MC = 0.2f;
+	float isovalue_MC = 0.5f;
+  
 	int nb_particles = 0;
 };
 
@@ -69,8 +78,10 @@ struct scene_structure : cgp::scene_inputs_generic {
 
 	mesh_drawable global_frame;          // The standard global frame
 	environment_structure environment;   // Standard environment controler
+	opengl_shader_structure shader_environment_map;
 	input_devices inputs;                // Storage for inputs status (mouse, keyboard, window dimension)
 	gui_parameters gui;                  // Standard GUI element storage
+	skybox_drawable skybox;
 	
 	// ****************************** //
 	// Elements and shapes of the scene
@@ -87,6 +98,9 @@ struct scene_structure : cgp::scene_inputs_generic {
 
 	cgp::grid_2D<cgp::vec3> field;      // grid used to represent the volume of the fluid under the particles
 	cgp::mesh_drawable field_quad; // quad used to display this field color
+
+	implicit_surface_structure implicit_surface;
+	field_function_structure field_function;
 
 
 	// ****************************** //
@@ -106,6 +120,7 @@ struct scene_structure : cgp::scene_inputs_generic {
 	vec3 get_particle_color(particle_element const& particle);
 
 	void spawn_particle(vec3 const& pos, int fluid_type);
+	void spawn_particle(vec3 const& pos, int fluid_type, vec3 const& velocity);
 	void spawn_random_type_particle(vec3 const &center);
 	void spawn_particles_in_disk(vec3 const& center, float radius, int N, int fluid_type);
 	void spawn_particles_in_sphere(vec3 const& center, float radius, int N, int fluid_type);

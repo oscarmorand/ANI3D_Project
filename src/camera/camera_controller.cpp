@@ -1,5 +1,5 @@
 #include "cgp/01_base/base.hpp"
-#include "camera_controller.hpp"
+#include "camera/camera_controller.hpp"
 
 void camera_controller::initialize(input_devices& inputs_param, window_structure& window_param)
 {

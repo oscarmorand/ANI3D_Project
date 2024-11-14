@@ -158,9 +158,14 @@ void scene_structure::display_gui()
 		gui.nb_particles = 0;
 	}
 
-	ImGui::Spacing();
-	ImGui::Spacing();
-	ImGui::Spacing();
+	ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
+	if (dimension == DIM_3D)
+	{
+		ImGui::Text("Rendering parameters (marching cubes)");
+		ImGui::SliderFloat("Influence radius", &gui.influence_radius_MC, 0.0f, 0.5f, "%0.5f");
+		ImGui::SliderFloat("Isovalue", &gui.isovalue_MC, 0.0f, 1.0f, "%0.5f");
+
+	}
 	ImGui::Text("Simulation parameters");
 	ImGui::SliderFloat("Timer scale", &timer.scale, 0.01f, 4.0f, "%0.2f");
 	ImGui::SliderFloat("Gravity", &sph_parameters.gravity_strength, 0.0f, 30.0f, "%0.1f");
@@ -183,7 +188,7 @@ void scene_structure::display_gui()
 	{
 		sph_parameters.gravity_strength = 24.79f;
 	}
-	ImGui::SliderFloat("Neighbour radius", &sph_parameters.h, 0.1f, 0.3f, "%0.3f");
+	ImGui::SliderFloat("Neighbour radius", &sph_parameters.h, 0.01f, 0.3f, "%0.3f");
 	ImGui::SliderFloat("Fluid mixing rate", &sph_parameters.fluid_mixing_rate, 0.0f, 1.0f, "%0.2f");
 
 	ImGui::Spacing();
@@ -259,6 +264,7 @@ void scene_structure::display_gui()
 			select_color_mode();
 		}
 	}
+	ImGui::Checkbox("Mesh", &gui.display_mesh);
 	ImGui::Checkbox("Particles", &gui.display_particles);
 	if (gui.display_particles)
 	{
