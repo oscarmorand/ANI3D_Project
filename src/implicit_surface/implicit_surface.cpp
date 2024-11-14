@@ -65,7 +65,7 @@ void implicit_surface_structure::update_marching_cube(float isovalue)
 
 
 
-void implicit_surface_structure::update_field(field_function_structure const& field_function, float isovalue, cgp::numarray<particle_element> particles)
+void implicit_surface_structure::update_field(field_function_structure const& field_function, spatial_grid_3d particles, float isovalue, float radius)
 {
 	// Variable shortcut
 	grid_3D<float>& field = field_param.field;
@@ -73,7 +73,7 @@ void implicit_surface_structure::update_field(field_function_structure const& fi
 	spatial_domain_grid_3D& domain = field_param.domain;
 
 	// Compute the scalar field
-	field = compute_discrete_scalar_field(domain, field_function, particles);
+	field = compute_discrete_scalar_field(domain, field_function, particles, radius);
 
 	// Compute the gradient of the scalar field
 	gradient = compute_gradient(field);
@@ -96,50 +96,39 @@ void implicit_surface_structure::set_domain(int samples, cgp::vec3 const& length
 
 
 
-grid_3D<float> compute_discrete_scalar_field(spatial_domain_grid_3D const& domain, field_function_structure const& func, cgp::numarray<particle_element> particles)
+grid_3D<float> compute_discrete_scalar_field(spatial_domain_grid_3D const& domain, field_function_structure const& func, spatial_grid_3d particles, float radius)
 {
 	grid_3D<float> field;
-	float influence_radius = 0.2f;
-	float radius2 = influence_radius * influence_radius;
+	float volume = 64 * Pi * pow(radius,9) / 315;
+	float radius2 = radius * radius;
 	float radius22 = 2 * radius2;
 	field.resize(domain.samples);
 	cgp::vec3 voxel_length = domain.voxel_length();
-    for (const auto& particle : particles) {
-		
-		int min_x = std::max(0, int((particle.p.x - influence_radius + 1) * domain.samples.x / domain.length.x));
-		int max_x = std::min(domain.samples.x - 1, int((particle.p.x + influence_radius+ 1) * domain.samples.x / domain.length.x));
-		int min_y = std::max(0, int((particle.p.y - influence_radius+ 1) * domain.samples.y / domain.length.y));
-		int max_y = std::min(domain.samples.y - 1, int((particle.p.y + influence_radius+ 1) * domain.samples.y / domain.length.y));
-		int min_z = std::max(0, int((particle.p.z - influence_radius+ 1) * domain.samples.z / domain.length.z));
-		int max_z = std::min(domain.samples.z - 1, int((particle.p.z + influence_radius+ 1) * domain.samples.z / domain.length.z));
 
+
+	#pragma omp parallel for
+	for (int kz = 0; kz < domain.samples.z; kz++) {
 		#pragma omp parallel for
-		for (int kz = min_z; kz < max_z; kz++) {
+		for (int ky = 0; ky < domain.samples.y; ky++) {
 			#pragma omp parallel for
-			for (int ky = min_y; ky < max_y; ky++) {
-				#pragma omp parallel for
-				for (int kx = min_x; kx < max_x; kx++) {
-					vec3 const p = domain.position({ kx, ky, kz });
-					field(kx, ky, kz) += func(p, particle.p, radius2, radius22);
+			for (int kx = 0; kx < domain.samples.x; kx++) {
+
+				vec3 const p = domain.position({ kx, ky, kz });
+				int cell_index = particles.compute_cell_index(p);
+				std::vector<particle_element*> neighbours = particles.get_neighbors(cell_index);
+				
+				for(particle_element* neighbour : neighbours)
+				{
+					float const d = norm(neighbour->p - p);
+					float d2 = d * d;
+					
+					if (d2 <= radius2)
+						field(kx, ky, kz) += func(p,neighbour->p, radius, radius2, radius22) * neighbour->m;
 				}
 			}
 		}
-		
-
-/*
-		#pragma omp parallel for
-			for (int kz = 0; kz < domain.samples.z; kz++) {
-				#pragma omp parallel for
-				for (int ky = 0; ky < domain.samples.y; ky++) {
-					#pragma omp parallel for
-					for (int kx = 0; kx < domain.samples.x; kx++) {
-						vec3 const p = domain.position({ kx, ky, kz });
-						field(kx, ky, kz) += func(p, particle.p, influence_radius);
-					}
-				}
-			}*/
+	}
 			
-		}
 
 	return field;
 }

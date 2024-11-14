@@ -3,10 +3,11 @@
 using namespace cgp;
 
 // Parameterization Gaussian centered at point p0
-static float gaussian(vec3 const& p, vec3 const& p0, float sigma)
+static float gaussian(vec3 const& p, vec3 const& p0, float sigma2)
 {
 	float const d = norm(p - p0);
-	return d < sigma ? 1.0f / (d + 1e-6f) : 0.0f;
+	float const value = std::exp(-(d * d) / (sigma2));
+	return value;
 }
 
 static float quartic_falloff(cgp::vec3 const& p, cgp::vec3 const& p0, float radius)
@@ -37,9 +38,13 @@ static float cubic_falloff(cgp::vec3 const& p, cgp::vec3 const& p0, float radius
     return (1.0f - t) * (1.0f - t) * (1.0f - t);  // Cubic falloff
 }
 
-float field_function_structure::operator()(cgp::vec3 const& cell, cgp::vec3 const& particle, float radius2, float radius22) const
+float field_function_structure::operator()(cgp::vec3 const& cell, cgp::vec3 const& particle, float radius, float radius2, float radius22) const
 {
 	float value = 0.0f;
-	value += laplacian_of_gaussian(particle, cell, radius2, radius22);
-	return value;
+	//value += laplacian_of_gaussian(particle, cell, radius2, radius22);
+    value += laplacian_of_gaussian(particle, cell, radius2 ,radius22);
+
+    
+    float value2 = value * value;
+    return value2 * value2;
 }
