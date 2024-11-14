@@ -164,7 +164,6 @@ void scene_structure::display_gui()
 		ImGui::Text("Rendering parameters (marching cubes)");
 		ImGui::SliderFloat("Influence radius", &gui.influence_radius_MC, 0.0f, 0.5f, "%0.5f");
 		ImGui::SliderFloat("Isovalue", &gui.isovalue_MC, 0.0f, 1.0f, "%0.5f");
-
 	}
 	ImGui::Text("Simulation parameters");
 	ImGui::SliderFloat("Timer scale", &timer.scale, 0.01f, 4.0f, "%0.2f");
@@ -263,9 +262,24 @@ void scene_structure::display_gui()
 
 			select_color_mode();
 		}
+
+		ImGui::Checkbox("Particles", &gui.display_particles);
 	}
-	ImGui::Checkbox("Mesh", &gui.display_mesh);
-	ImGui::Checkbox("Particles", &gui.display_particles);
+	else
+	{
+		ImGui::RadioButton("Mesh", &gui.display_mode_3d, MESH);
+		ImGui::SameLine();
+		ImGui::RadioButton("Particles", &gui.display_mode_3d, POINTS);
+
+		if (gui.display_mode_3d == MESH) {
+			gui.display_mesh = true;
+			gui.display_particles = false;
+		}
+		else {
+			gui.display_mesh = false;
+			gui.display_particles = true;
+		}
+	}
 	if (gui.display_particles)
 	{
 		ImGui::SliderFloat("Radius", &gui.particle_radius_ratio, 0.01f, 1.0f, "%0.2f");

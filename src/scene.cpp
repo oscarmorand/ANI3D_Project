@@ -331,33 +331,16 @@ void scene_structure::right_click()
 	vec2 const cursor = inputs.mouse.position.current;
 	vec3 const p = {cursor.x, cursor.y, 0};
 
-	if (dimension == DIM_2D) {
-		if (gui.right_click_action == SPAWN_PARTICLES)
-			spawn_particles_in_disk(p, gui.spawn_particle_radius, gui.spawn_particle_number, gui.spawn_particle_type);
-		else if (gui.right_click_action == REMOVE_PARTICLES)
-			delete_particles_in_disk(p, gui.spawn_particle_radius);
-		else if (gui.right_click_action == ADD_RADIAL_FORCE)
-			add_radial_force(p, gui.spawn_particle_radius, gui.force_strength);
-		else if (gui.right_click_action == ADD_VORTEX_FORCE)
-			add_vortex_force(p, gui.spawn_particle_radius, gui.force_strength);
-		else if (gui.right_click_action == ADD_GRAVITY_FORCE)
-			add_gravity_force(p, gui.spawn_particle_radius, gui.force_strength);
-	}
-	else {
-		if (gui.right_click_action == SPAWN_PARTICLES)
-			spawn_particles_in_sphere(p, gui.spawn_particle_radius, gui.spawn_particle_number, gui.spawn_particle_type);
-		else if (gui.right_click_action == ADD_RADIAL_FORCE)
-			add_radial_force(p, gui.spawn_particle_radius, gui.force_strength);
-		else if (gui.right_click_action == ADD_VORTEX_FORCE)
-			add_vortex_force(p, gui.spawn_particle_radius, gui.force_strength);
-		else if (gui.right_click_action == ADD_GRAVITY_FORCE)
-			add_gravity_force(p, gui.spawn_particle_radius, gui.force_strength);
-		/*
-		vec3 cam_dir = camera_control.camera_model.get_view_direction();
-		base_plan plan = get_most_orthogonal_plan(cam_dir);
-		*/
-		// FIXME: find the intersection of the most orthogonal plan, use it for the center of the action
-	}
+	if (gui.right_click_action == SPAWN_PARTICLES)
+		spawn_particles_in_disk(p, gui.spawn_particle_radius, gui.spawn_particle_number, gui.spawn_particle_type);
+	else if (gui.right_click_action == REMOVE_PARTICLES)
+		delete_particles_in_disk(p, gui.spawn_particle_radius);
+	else if (gui.right_click_action == ADD_RADIAL_FORCE)
+		add_radial_force(p, gui.spawn_particle_radius, gui.force_strength);
+	else if (gui.right_click_action == ADD_VORTEX_FORCE)
+		add_vortex_force(p, gui.spawn_particle_radius, gui.force_strength);
+	else if (gui.right_click_action == ADD_GRAVITY_FORCE)
+		add_gravity_force(p, gui.spawn_particle_radius, gui.force_strength);
 }
 
 void scene_structure::mouse_click_event()
