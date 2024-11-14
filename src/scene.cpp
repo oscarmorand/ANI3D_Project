@@ -217,22 +217,23 @@ if (timer.is_running())
 			draw(sphere_particle, environment);
 		}
 	}
-
-	if (gui.display_mesh)
+	if (gui.display_skybox)
 	{
 		if (dimension == DIM_3D) {
-
 			glDepthMask(GL_FALSE);
 			draw(skybox, environment);
 			glDepthMask(GL_TRUE);
-
+		}
+	}
+	if (gui.display_mesh)
+	{
+		if (dimension == DIM_3D) {
 			glDisable(GL_DEPTH_TEST);
 			implicit_surface.update_field(field_function, grid_3d, gui.isovalue_MC, gui.influence_radius_MC);
 			implicit_surface.drawable_param.shape.shader = shader_environment_map;
 			implicit_surface.drawable_param.shape.supplementary_texture["image_skybox"] = skybox.texture;
 			draw(implicit_surface.drawable_param.shape, environment);
 			glEnable(GL_DEPTH_TEST);
-
 		}
 	}
 

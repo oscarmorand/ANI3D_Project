@@ -40,6 +40,7 @@ struct gui_parameters {
 	bool display_particles = true;
 	bool display_radius = false;
 	bool display_mesh = true;
+	bool display_skybox = true;
 
 	float particle_radius_ratio = 0.1f;
 

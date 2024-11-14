@@ -266,6 +266,7 @@ void scene_structure::display_gui()
 	}
 	ImGui::Checkbox("Mesh", &gui.display_mesh);
 	ImGui::Checkbox("Particles", &gui.display_particles);
+	ImGui::Checkbox("Skybox", &gui.display_skybox);
 	if (gui.display_particles)
 	{
 		ImGui::SliderFloat("Radius", &gui.particle_radius_ratio, 0.01f, 1.0f, "%0.2f");
